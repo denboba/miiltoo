@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import '../models/ride_model.dart';
 import '../services/firestore_repo.dart';
+import '../widgets/location_picker_widget.dart';
 import 'package:uuid/uuid.dart';
 import 'package:intl/intl.dart';
 
@@ -75,6 +76,48 @@ class _CreateRideScreenState extends State<CreateRideScreen> {
         }
       }
     }
+  }
+
+  void _pickOriginLocation() {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => LocationPickerWidget(
+          initialLocation: _originLat != 0.0 && _originLng != 0.0
+              ? LatLngPoint(lat: _originLat, lng: _originLng)
+              : null,
+          onLocationSelected: (location) {
+            setState(() {
+              _originLat = location.lat;
+              _originLng = location.lng;
+              _originAddressController.text = location.address ?? '${location.lat.toStringAsFixed(4)}, ${location.lng.toStringAsFixed(4)}';
+            });
+          },
+          title: 'Select Origin',
+        ),
+      ),
+    );
+  }
+
+  void _pickDestinationLocation() {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => LocationPickerWidget(
+          initialLocation: _destLat != 0.0 && _destLng != 0.0
+              ? LatLngPoint(lat: _destLat, lng: _destLng)
+              : null,
+          onLocationSelected: (location) {
+            setState(() {
+              _destLat = location.lat;
+              _destLng = location.lng;
+              _destAddressController.text = location.address ?? '${location.lat.toStringAsFixed(4)}, ${location.lng.toStringAsFixed(4)}';
+            });
+          },
+          title: 'Select Destination',
+        ),
+      ),
+    );
   }
 
   void _createRide() async {
@@ -171,34 +214,37 @@ class _CreateRideScreenState extends State<CreateRideScreen> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const Row(
+                      Row(
                         children: [
-                          Icon(Icons.trip_origin, color: Colors.green),
-                          SizedBox(width: 8),
-                          Text('Origin', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+                          Icon(Icons.trip_origin, color: Theme.of(context).colorScheme.primary),
+                          const SizedBox(width: 8),
+                          const Text('Origin', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
                         ],
                       ),
                       const SizedBox(height: 12),
                       TextFormField(
                         controller: _originAddressController,
-                        decoration: const InputDecoration(
+                        decoration: InputDecoration(
                           labelText: 'Origin Address',
                           hintText: 'e.g., 123 Main St, City',
-                          border: OutlineInputBorder(),
-                          prefixIcon: Icon(Icons.location_on),
+                          prefixIcon: const Icon(Icons.location_on),
+                          suffixIcon: IconButton(
+                            icon: const Icon(Icons.map),
+                            onPressed: _pickOriginLocation,
+                            tooltip: 'Pick on Map',
+                          ),
                         ),
                         validator: (v) => v == null || v.trim().isEmpty ? 'Please enter origin address' : null,
+                        readOnly: false,
                       ),
-                      const SizedBox(height: 8),
-                      TextFormField(
-                        decoration: const InputDecoration(
-                          labelText: 'Coordinates (optional)',
-                          hintText: 'lat,lng (e.g., 40.7128,-74.0060)',
-                          border: OutlineInputBorder(),
-                          prefixIcon: Icon(Icons.my_location),
+                      if (_originLat != 0.0 && _originLng != 0.0)
+                        Padding(
+                          padding: const EdgeInsets.only(top: 8),
+                          child: Text(
+                            'Coordinates: ${_originLat.toStringAsFixed(4)}, ${_originLng.toStringAsFixed(4)}',
+                            style: Theme.of(context).textTheme.bodySmall,
+                          ),
                         ),
-                        onChanged: (v) => _parseCoordinates(v, true),
-                      ),
                     ],
                   ),
                 ),
@@ -212,34 +258,37 @@ class _CreateRideScreenState extends State<CreateRideScreen> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const Row(
+                      Row(
                         children: [
-                          Icon(Icons.location_on, color: Colors.red),
-                          SizedBox(width: 8),
-                          Text('Destination', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+                          Icon(Icons.location_on, color: Theme.of(context).colorScheme.error),
+                          const SizedBox(width: 8),
+                          const Text('Destination', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
                         ],
                       ),
                       const SizedBox(height: 12),
                       TextFormField(
                         controller: _destAddressController,
-                        decoration: const InputDecoration(
+                        decoration: InputDecoration(
                           labelText: 'Destination Address',
                           hintText: 'e.g., 456 Oak Ave, Town',
-                          border: OutlineInputBorder(),
-                          prefixIcon: Icon(Icons.location_on),
+                          prefixIcon: const Icon(Icons.location_on),
+                          suffixIcon: IconButton(
+                            icon: const Icon(Icons.map),
+                            onPressed: _pickDestinationLocation,
+                            tooltip: 'Pick on Map',
+                          ),
                         ),
                         validator: (v) => v == null || v.trim().isEmpty ? 'Please enter destination address' : null,
+                        readOnly: false,
                       ),
-                      const SizedBox(height: 8),
-                      TextFormField(
-                        decoration: const InputDecoration(
-                          labelText: 'Coordinates (optional)',
-                          hintText: 'lat,lng (e.g., 40.7580,-73.9855)',
-                          border: OutlineInputBorder(),
-                          prefixIcon: Icon(Icons.my_location),
+                      if (_destLat != 0.0 && _destLng != 0.0)
+                        Padding(
+                          padding: const EdgeInsets.only(top: 8),
+                          child: Text(
+                            'Coordinates: ${_destLat.toStringAsFixed(4)}, ${_destLng.toStringAsFixed(4)}',
+                            style: Theme.of(context).textTheme.bodySmall,
+                          ),
                         ),
-                        onChanged: (v) => _parseCoordinates(v, false),
-                      ),
                     ],
                   ),
                 ),
