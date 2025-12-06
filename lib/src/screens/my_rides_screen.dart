@@ -3,6 +3,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:intl/intl.dart';
 import '../models/ride_model.dart';
 import '../services/firestore_repo.dart';
+import '../config/app_theme.dart';
 import 'ride_detail_screen.dart';
 import 'manage_requests_screen.dart';
 
@@ -17,33 +18,12 @@ class _MyRidesScreenState extends State<MyRidesScreen> {
   final FirestoreRepo _repo = FirestoreRepo();
 
   String _getStatusColor(String status) {
-    switch (status) {
-      case 'open':
-        return 'green';
-      case 'ongoing':
-        return 'blue';
-      case 'completed':
-        return 'gray';
-      case 'cancelled':
-        return 'red';
-      default:
-        return 'gray';
-    }
+    // Legacy method - kept for compatibility
+    return status;
   }
 
   Color _getStatusColorValue(String status) {
-    switch (status) {
-      case 'open':
-        return Colors.green;
-      case 'ongoing':
-        return Colors.blue;
-      case 'completed':
-        return Colors.grey;
-      case 'cancelled':
-        return Colors.red;
-      default:
-        return Colors.grey;
-    }
+    return AppTheme.getStatusColor(status);
   }
 
   void _showStatusUpdateDialog(Ride ride) {
@@ -54,24 +34,28 @@ class _MyRidesScreenState extends State<MyRidesScreen> {
         content: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            ListTile(
-              title: const Text('Open'),
-              leading: const Icon(Icons.check_circle_outline, color: Colors.green),
+            _StatusOption(
+              status: 'open',
+              icon: Icons.check_circle_outline,
+              color: AppTheme.successColor,
               onTap: () => _updateStatus(ride.id, 'open'),
             ),
-            ListTile(
-              title: const Text('Ongoing'),
-              leading: const Icon(Icons.directions_car, color: Colors.blue),
+            _StatusOption(
+              status: 'ongoing',
+              icon: Icons.directions_car,
+              color: AppTheme.primaryColor,
               onTap: () => _updateStatus(ride.id, 'ongoing'),
             ),
-            ListTile(
-              title: const Text('Completed'),
-              leading: const Icon(Icons.done_all, color: Colors.grey),
+            _StatusOption(
+              status: 'completed',
+              icon: Icons.done_all,
+              color: AppTheme.textSecondary,
               onTap: () => _updateStatus(ride.id, 'completed'),
             ),
-            ListTile(
-              title: const Text('Cancelled'),
-              leading: const Icon(Icons.cancel, color: Colors.red),
+            _StatusOption(
+              status: 'cancelled',
+              icon: Icons.cancel,
+              color: AppTheme.errorColor,
               onTap: () => _updateStatus(ride.id, 'cancelled'),
             ),
           ],
@@ -234,6 +218,29 @@ class _MyRidesScreenState extends State<MyRidesScreen> {
         icon: const Icon(Icons.add),
         label: const Text('New Ride'),
       ),
+    );
+  }
+}
+
+class _StatusOption extends StatelessWidget {
+  final String status;
+  final IconData icon;
+  final Color color;
+  final VoidCallback onTap;
+
+  const _StatusOption({
+    required this.status,
+    required this.icon,
+    required this.color,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return ListTile(
+      title: Text(status[0].toUpperCase() + status.substring(1)),
+      leading: Icon(icon, color: color),
+      onTap: onTap,
     );
   }
 }

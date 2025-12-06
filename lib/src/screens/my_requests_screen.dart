@@ -4,6 +4,7 @@ import 'package:intl/intl.dart';
 import '../models/request_model.dart';
 import '../models/ride_model.dart';
 import '../services/firestore_repo.dart';
+import '../config/app_theme.dart';
 import 'ride_detail_screen.dart';
 import 'chat_screen.dart';
 
@@ -51,33 +52,11 @@ class _MyRequestsScreenState extends State<MyRequestsScreen> {
   }
 
   Color _getStatusColor(String status) {
-    switch (status) {
-      case 'pending':
-        return Colors.orange;
-      case 'accepted':
-        return Colors.green;
-      case 'rejected':
-        return Colors.red;
-      case 'cancelled':
-        return Colors.grey;
-      default:
-        return Colors.grey;
-    }
+    return AppTheme.getStatusColor(status);
   }
 
   IconData _getStatusIcon(String status) {
-    switch (status) {
-      case 'pending':
-        return Icons.hourglass_empty;
-      case 'accepted':
-        return Icons.check_circle;
-      case 'rejected':
-        return Icons.cancel;
-      case 'cancelled':
-        return Icons.block;
-      default:
-        return Icons.help;
-    }
+    return AppTheme.getStatusIcon(status);
   }
 
   void _cancelRequest(RideRequest request) async {
