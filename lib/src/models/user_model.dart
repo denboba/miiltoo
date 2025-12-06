@@ -4,7 +4,7 @@ class UserModel {
   final String email;
   final String? phone;
   final String? photoUrl;
-  final String role; // 'driver' or 'passenger'
+  final String role; // 'driver' or 'passenger' or 'both'
 
   UserModel({
     required this.uid,
@@ -14,6 +14,24 @@ class UserModel {
     this.photoUrl,
     this.role = 'passenger',
   });
+
+  UserModel copyWith({
+    String? uid,
+    String? name,
+    String? email,
+    String? phone,
+    String? photoUrl,
+    String? role,
+  }) {
+    return UserModel(
+      uid: uid ?? this.uid,
+      name: name ?? this.name,
+      email: email ?? this.email,
+      phone: phone ?? this.phone,
+      photoUrl: photoUrl ?? this.photoUrl,
+      role: role ?? this.role,
+    );
+  }
 
   Map<String, dynamic> toMap() {
     return {
@@ -38,4 +56,5 @@ class UserModel {
     );
   }
 }
+
 
