@@ -11,14 +11,22 @@ import 'src/screens/signup_screen.dart';
 import 'src/screens/profile_screen.dart';
 import 'src/screens/my_rides_screen.dart';
 import 'src/screens/my_requests_screen.dart';
+import 'src/utils/logger.dart';
 import 'firebase_options.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  await Firebase.initializeApp(
-    options: DefaultFirebaseOptions.currentPlatform,
-  );
+  AppLogger.info('Initializing Firebase...');
+  try {
+    await Firebase.initializeApp(
+      options: DefaultFirebaseOptions.currentPlatform,
+    );
+    AppLogger.info('Firebase initialized successfully');
+  } catch (e, stackTrace) {
+    AppLogger.error('Firebase initialization failed', error: e, stackTrace: stackTrace);
+  }
+  
   runApp(const MyApp());
 }
 

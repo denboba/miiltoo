@@ -3,8 +3,10 @@ import '../models/ride_model.dart';
 import '../models/request_model.dart';
 import '../models/user_model.dart';
 import '../models/message_model.dart';
+import '../utils/logger.dart';
 
 class FirestoreRepo {
+  static const String _tag = 'FirestoreRepo';
   final FirebaseFirestore _db = FirebaseFirestore.instance;
 
   CollectionReference get ridesRef => _db.collection('rides');
@@ -219,24 +221,43 @@ class FirestoreRepo {
   // ==================== USER METHODS ====================
 
   Future<void> createUserProfile({required String uid, required String name, required String email, String? phone, String role = 'passenger', String? profilePicUrl}) async {
-    final doc = usersRef.doc(uid);
-    await doc.set({
-      'uid': uid,
-      'name': name,
-      'email': email,
-      'phone': phone ?? '',
-      'role': role,
-      'photoUrl': profilePicUrl ?? '',
-      'createdAt': DateTime.now().toUtc(),
-    });
+    AppLogger.info('Creating user profile for UID: $uid', tag: _tag);
+    try {
+      final doc = usersRef.doc(uid);
+      final userData = {
+        'uid': uid,
+        'name': name,
+        'email': email,
+        'phone': phone ?? '',
+        'role': role,
+        'photoUrl': profilePicUrl ?? '',
+        'createdAt': FieldValue.serverTimestamp(),
+      };
+      AppLogger.debug('User data: $userData', tag: _tag);
+      await doc.set(userData);
+      AppLogger.info('User profile created successfully', tag: _tag);
+    } catch (e, stackTrace) {
+      AppLogger.error('Failed to create user profile', tag: _tag, error: e, stackTrace: stackTrace);
+      rethrow;
+    }
   }
 
   Future<UserModel?> getUserProfile(String uid) async {
-    final doc = await usersRef.doc(uid).get();
-    if (!doc.exists) return null;
-    final data = doc.data() as Map<String, dynamic>;
-    data['uid'] = uid;
-    return UserModel.fromMap(data);
+    AppLogger.debug('Getting user profile for UID: $uid', tag: _tag);
+    try {
+      final doc = await usersRef.doc(uid).get();
+      if (!doc.exists) {
+        AppLogger.debug('User profile not found for UID: $uid', tag: _tag);
+        return null;
+      }
+      final data = doc.data() as Map<String, dynamic>;
+      data['uid'] = uid;
+      AppLogger.debug('User profile found: ${data['name']}', tag: _tag);
+      return UserModel.fromMap(data);
+    } catch (e, stackTrace) {
+      AppLogger.error('Failed to get user profile', tag: _tag, error: e, stackTrace: stackTrace);
+      rethrow;
+    }
   }
 
   Stream<UserModel?> userProfileStream(String uid) {

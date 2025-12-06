@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../services/auth_service.dart';
+import '../utils/logger.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -9,6 +10,7 @@ class LoginScreen extends StatefulWidget {
 }
 
 class _LoginScreenState extends State<LoginScreen> {
+  static const String _tag = 'LoginScreen';
   final _formKey = GlobalKey<FormState>();
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
@@ -20,34 +22,34 @@ class _LoginScreenState extends State<LoginScreen> {
   void _signIn() async {
     if (!_formKey.currentState!.validate()) return;
 
+    final email = _emailController.text.trim();
+    final password = _passwordController.text.trim();
+
+    AppLogger.info('User initiating sign in with email: $email', tag: _tag);
+
     setState(() {
       _loading = true;
       _error = null;
     });
+
     try {
-      await _auth.signIn(_emailController.text.trim(), _passwordController.text.trim());
+      await _auth.signIn(email, password);
+      AppLogger.info('Sign in successful, navigating to home', tag: _tag);
       if (!mounted) return;
       Navigator.pushReplacementNamed(context, '/home');
-    } catch (e) {
+    } on AuthException catch (e) {
+      AppLogger.error('Sign in failed with AuthException', tag: _tag, error: e);
       setState(() {
-        _error = _parseError(e.toString());
+        _error = e.message;
+      });
+    } catch (e, stackTrace) {
+      AppLogger.error('Sign in failed with unexpected error', tag: _tag, error: e, stackTrace: stackTrace);
+      setState(() {
+        _error = 'Sign in failed: ${e.toString()}';
       });
     } finally {
       if (mounted) setState(() => _loading = false);
     }
-  }
-
-  String _parseError(String error) {
-    if (error.contains('user-not-found')) {
-      return 'No user found with this email';
-    } else if (error.contains('wrong-password')) {
-      return 'Incorrect password';
-    } else if (error.contains('invalid-email')) {
-      return 'Invalid email address';
-    } else if (error.contains('too-many-requests')) {
-      return 'Too many attempts. Please try again later';
-    }
-    return 'Sign in failed. Please try again';
   }
 
   @override
@@ -104,11 +106,13 @@ class _LoginScreenState extends State<LoginScreen> {
                     ),
                     keyboardType: TextInputType.emailAddress,
                     textInputAction: TextInputAction.next,
+                    autocorrect: false,
+                    enableSuggestions: false,
                     validator: (v) {
                       if (v == null || v.trim().isEmpty) {
                         return 'Please enter your email';
                       }
-                      if (!v.contains('@')) {
+                      if (!v.contains('@') || !v.contains('.')) {
                         return 'Please enter a valid email';
                       }
                       return null;

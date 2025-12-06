@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../services/auth_service.dart';
 import '../services/firestore_repo.dart';
+import '../utils/logger.dart';
 
 class SignupScreen extends StatefulWidget {
   const SignupScreen({super.key});
@@ -10,6 +11,7 @@ class SignupScreen extends StatefulWidget {
 }
 
 class _SignupScreenState extends State<SignupScreen> {
+  static const String _tag = 'SignupScreen';
   final _formKey = GlobalKey<FormState>();
   final _nameController = TextEditingController();
   final _emailController = TextEditingController();
@@ -27,42 +29,57 @@ class _SignupScreenState extends State<SignupScreen> {
   void _signUp() async {
     if (!_formKey.currentState!.validate()) return;
 
+    final name = _nameController.text.trim();
+    final email = _emailController.text.trim();
+    final password = _passwordController.text.trim();
+    final phone = _phoneController.text.trim();
+
+    AppLogger.info('User initiating sign up with email: $email, name: $name, role: $_role', tag: _tag);
+
     setState(() {
       _loading = true;
       _error = null;
     });
+
     try {
-      final cred = await _auth.signUp(_emailController.text.trim(), _passwordController.text.trim());
+      // Step 1: Create Firebase Auth user
+      AppLogger.debug('Creating Firebase Auth user...', tag: _tag);
+      final cred = await _auth.signUp(email, password);
       final uid = cred.user?.uid;
+      
+      AppLogger.info('Firebase Auth user created with UID: $uid', tag: _tag);
+
+      // Step 2: Create Firestore user profile
       if (uid != null) {
+        AppLogger.debug('Creating Firestore user profile...', tag: _tag);
         await _repo.createUserProfile(
           uid: uid,
-          name: _nameController.text.trim(),
-          email: _emailController.text.trim(),
-          phone: _phoneController.text.trim(),
+          name: name,
+          email: email,
+          phone: phone.isNotEmpty ? phone : null,
           role: _role,
         );
+        AppLogger.info('Firestore user profile created successfully', tag: _tag);
+      } else {
+        AppLogger.warning('User UID is null after sign up', tag: _tag);
       }
+
+      AppLogger.info('Sign up complete, navigating to home', tag: _tag);
       if (!mounted) return;
       Navigator.pushReplacementNamed(context, '/home');
-    } catch (e) {
+    } on AuthException catch (e) {
+      AppLogger.error('Sign up failed with AuthException', tag: _tag, error: e);
       setState(() {
-        _error = _parseError(e.toString());
+        _error = e.message;
+      });
+    } catch (e, stackTrace) {
+      AppLogger.error('Sign up failed with unexpected error', tag: _tag, error: e, stackTrace: stackTrace);
+      setState(() {
+        _error = 'Sign up failed: ${e.toString()}';
       });
     } finally {
       if (mounted) setState(() => _loading = false);
     }
-  }
-
-  String _parseError(String error) {
-    if (error.contains('email-already-in-use')) {
-      return 'An account already exists with this email';
-    } else if (error.contains('weak-password')) {
-      return 'Password is too weak';
-    } else if (error.contains('invalid-email')) {
-      return 'Invalid email address';
-    }
-    return 'Sign up failed. Please try again';
   }
 
   @override
@@ -122,6 +139,9 @@ class _SignupScreenState extends State<SignupScreen> {
                     if (v == null || v.trim().isEmpty) {
                       return 'Please enter your name';
                     }
+                    if (v.trim().length < 2) {
+                      return 'Name must be at least 2 characters';
+                    }
                     return null;
                   },
                 ),
@@ -136,11 +156,13 @@ class _SignupScreenState extends State<SignupScreen> {
                   ),
                   keyboardType: TextInputType.emailAddress,
                   textInputAction: TextInputAction.next,
+                  autocorrect: false,
+                  enableSuggestions: false,
                   validator: (v) {
                     if (v == null || v.trim().isEmpty) {
                       return 'Please enter your email';
                     }
-                    if (!v.contains('@')) {
+                    if (!v.contains('@') || !v.contains('.')) {
                       return 'Please enter a valid email';
                     }
                     return null;
@@ -170,6 +192,7 @@ class _SignupScreenState extends State<SignupScreen> {
                       icon: Icon(_obscurePassword ? Icons.visibility : Icons.visibility_off),
                       onPressed: () => setState(() => _obscurePassword = !_obscurePassword),
                     ),
+                    helperText: 'At least 6 characters',
                   ),
                   obscureText: _obscurePassword,
                   textInputAction: TextInputAction.next,
@@ -199,6 +222,9 @@ class _SignupScreenState extends State<SignupScreen> {
                   obscureText: _obscureConfirmPassword,
                   textInputAction: TextInputAction.done,
                   validator: (v) {
+                    if (v == null || v.isEmpty) {
+                      return 'Please confirm your password';
+                    }
                     if (v != _passwordController.text) {
                       return 'Passwords do not match';
                     }
