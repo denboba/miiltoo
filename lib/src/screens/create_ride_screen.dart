@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import '../models/ride_model.dart';
 import '../services/firestore_repo.dart';
 import 'package:uuid/uuid.dart';
+import 'package:intl/intl.dart';
 
 class CreateRideScreen extends StatefulWidget {
   const CreateRideScreen({super.key});
@@ -11,52 +13,128 @@ class CreateRideScreen extends StatefulWidget {
 }
 
 class _CreateRideScreenState extends State<CreateRideScreen> {
-  final _originController = TextEditingController();
-  final _destController = TextEditingController();
-  final _dateController = TextEditingController();
-  final _seatsController = TextEditingController(text: '1');
+  final _formKey = GlobalKey<FormState>();
+  final _originAddressController = TextEditingController();
+  final _destAddressController = TextEditingController();
+  final _notesController = TextEditingController();
   final FirestoreRepo _repo = FirestoreRepo();
+
+  // Default coordinates (can be updated with map picker later)
+  double _originLat = 0.0;
+  double _originLng = 0.0;
+  double _destLat = 0.0;
+  double _destLng = 0.0;
+
+  DateTime _selectedDate = DateTime.now().add(const Duration(hours: 1));
+  TimeOfDay _selectedTime = TimeOfDay.now();
+  int _seatsTotal = 1;
   bool _loading = false;
   String? _error;
 
+  @override
+  void initState() {
+    super.initState();
+    _selectedTime = TimeOfDay.fromDateTime(DateTime.now().add(const Duration(hours: 1)));
+  }
+
+  Future<void> _selectDate() async {
+    final picked = await showDatePicker(
+      context: context,
+      initialDate: _selectedDate,
+      firstDate: DateTime.now(),
+      lastDate: DateTime.now().add(const Duration(days: 365)),
+    );
+    if (picked != null) {
+      setState(() => _selectedDate = picked);
+    }
+  }
+
+  Future<void> _selectTime() async {
+    final picked = await showTimePicker(
+      context: context,
+      initialTime: _selectedTime,
+    );
+    if (picked != null) {
+      setState(() => _selectedTime = picked);
+    }
+  }
+
+  void _parseCoordinates(String text, bool isOrigin) {
+    // Try to parse coordinates from text field (format: lat,lng)
+    final parts = text.split(',');
+    if (parts.length >= 2) {
+      final lat = double.tryParse(parts[0].trim());
+      final lng = double.tryParse(parts[1].trim());
+      if (lat != null && lng != null) {
+        if (isOrigin) {
+          _originLat = lat;
+          _originLng = lng;
+        } else {
+          _destLat = lat;
+          _destLng = lng;
+        }
+      }
+    }
+  }
+
   void _createRide() async {
+    if (!_formKey.currentState!.validate()) return;
+
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null) {
+      setState(() => _error = 'You must be logged in to create a ride');
+      return;
+    }
+
     setState(() {
       _loading = true;
       _error = null;
     });
-    try {
-      // For MVP, parse coordinates from text fields as lat,lng pairs: "lat,lng|address"
-      // Expect format: lat,lng|Address
-      LatLngPoint parse(String s) {
-        if (s.isEmpty) throw Exception('Empty');
-        final parts = s.split('|');
-        final coords = parts[0].split(',');
-        final lat = double.parse(coords[0]);
-        final lng = double.parse(coords[1]);
-        final addr = parts.length > 1 ? parts[1] : null;
-        return LatLngPoint(lat: lat, lng: lng, address: addr);
-      }
 
-      final origin = parse(_originController.text.trim());
-      final dest = parse(_destController.text.trim());
-      final date = DateTime.tryParse(_dateController.text.trim()) ?? DateTime.now().add(const Duration(hours: 1));
-      final seatsTotal = int.tryParse(_seatsController.text.trim()) ?? 1;
+    try {
+      // Get user profile for driver name
+      final userProfile = await _repo.getUserProfile(user.uid);
+      final driverName = userProfile?.name ?? user.displayName ?? 'Unknown Driver';
+
+      // Combine date and time
+      final dateTime = DateTime(
+        _selectedDate.year,
+        _selectedDate.month,
+        _selectedDate.day,
+        _selectedTime.hour,
+        _selectedTime.minute,
+      );
+
+      final origin = LatLngPoint(
+        lat: _originLat,
+        lng: _originLng,
+        address: _originAddressController.text.trim(),
+      );
+
+      final destination = LatLngPoint(
+        lat: _destLat,
+        lng: _destLng,
+        address: _destAddressController.text.trim(),
+      );
 
       final id = const Uuid().v4();
       final ride = Ride(
         id: id,
-        driverId: 'demo-driver', // TODO: replace with auth uid
+        driverId: user.uid,
+        driverName: driverName,
         origin: origin,
-        destination: dest,
-        dateTime: date,
-        seatsTotal: seatsTotal,
-        seatsAvailable: seatsTotal,
-        notes: null,
+        destination: destination,
+        dateTime: dateTime,
+        seatsTotal: _seatsTotal,
+        seatsAvailable: _seatsTotal,
+        notes: _notesController.text.trim().isNotEmpty ? _notesController.text.trim() : null,
       );
 
       final rideId = await _repo.createRide(ride);
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Ride created: $rideId')));
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Ride created successfully!')),
+      );
       Navigator.pop(context);
     } catch (e) {
       setState(() {
@@ -68,28 +146,244 @@ class _CreateRideScreenState extends State<CreateRideScreen> {
   }
 
   @override
+  void dispose() {
+    _originAddressController.dispose();
+    _destAddressController.dispose();
+    _notesController.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(title: const Text('Create Ride')),
-      body: Padding(
+      body: SingleChildScrollView(
         padding: const EdgeInsets.all(16.0),
-        child: SingleChildScrollView(
+        child: Form(
+          key: _formKey,
           child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              const Text('Origin (format: lat,lng|Address)'),
-              TextField(controller: _originController),
-              const SizedBox(height: 8),
-              const Text('Destination (format: lat,lng|Address)'),
-              TextField(controller: _destController),
-              const SizedBox(height: 8),
-              const Text('Date/time (ISO 8601 or leave empty)'),
-              TextField(controller: _dateController, decoration: const InputDecoration(hintText: '2025-12-31 15:30:00')),
-              const SizedBox(height: 8),
-              const Text('Total seats'),
-              TextField(controller: _seatsController, keyboardType: TextInputType.number),
-              const SizedBox(height: 12),
-              if (_error != null) Text(_error!, style: const TextStyle(color: Colors.red)),
-              ElevatedButton(onPressed: _loading ? null : _createRide, child: _loading ? const CircularProgressIndicator() : const Text('Create')),
+              // Origin Section
+              Card(
+                child: Padding(
+                  padding: const EdgeInsets.all(16),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Row(
+                        children: [
+                          Icon(Icons.trip_origin, color: Colors.green),
+                          SizedBox(width: 8),
+                          Text('Origin', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+                        ],
+                      ),
+                      const SizedBox(height: 12),
+                      TextFormField(
+                        controller: _originAddressController,
+                        decoration: const InputDecoration(
+                          labelText: 'Origin Address',
+                          hintText: 'e.g., 123 Main St, City',
+                          border: OutlineInputBorder(),
+                          prefixIcon: Icon(Icons.location_on),
+                        ),
+                        validator: (v) => v == null || v.trim().isEmpty ? 'Please enter origin address' : null,
+                      ),
+                      const SizedBox(height: 8),
+                      TextFormField(
+                        decoration: const InputDecoration(
+                          labelText: 'Coordinates (optional)',
+                          hintText: 'lat,lng (e.g., 40.7128,-74.0060)',
+                          border: OutlineInputBorder(),
+                          prefixIcon: Icon(Icons.my_location),
+                        ),
+                        onChanged: (v) => _parseCoordinates(v, true),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+              const SizedBox(height: 16),
+
+              // Destination Section
+              Card(
+                child: Padding(
+                  padding: const EdgeInsets.all(16),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Row(
+                        children: [
+                          Icon(Icons.location_on, color: Colors.red),
+                          SizedBox(width: 8),
+                          Text('Destination', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+                        ],
+                      ),
+                      const SizedBox(height: 12),
+                      TextFormField(
+                        controller: _destAddressController,
+                        decoration: const InputDecoration(
+                          labelText: 'Destination Address',
+                          hintText: 'e.g., 456 Oak Ave, Town',
+                          border: OutlineInputBorder(),
+                          prefixIcon: Icon(Icons.location_on),
+                        ),
+                        validator: (v) => v == null || v.trim().isEmpty ? 'Please enter destination address' : null,
+                      ),
+                      const SizedBox(height: 8),
+                      TextFormField(
+                        decoration: const InputDecoration(
+                          labelText: 'Coordinates (optional)',
+                          hintText: 'lat,lng (e.g., 40.7580,-73.9855)',
+                          border: OutlineInputBorder(),
+                          prefixIcon: Icon(Icons.my_location),
+                        ),
+                        onChanged: (v) => _parseCoordinates(v, false),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+              const SizedBox(height: 16),
+
+              // Date & Time Section
+              Card(
+                child: Padding(
+                  padding: const EdgeInsets.all(16),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Row(
+                        children: [
+                          Icon(Icons.schedule, color: Colors.blue),
+                          SizedBox(width: 8),
+                          Text('When', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+                        ],
+                      ),
+                      const SizedBox(height: 12),
+                      Row(
+                        children: [
+                          Expanded(
+                            child: OutlinedButton.icon(
+                              onPressed: _selectDate,
+                              icon: const Icon(Icons.calendar_today),
+                              label: Text(DateFormat('MMM d, yyyy').format(_selectedDate)),
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: OutlinedButton.icon(
+                              onPressed: _selectTime,
+                              icon: const Icon(Icons.access_time),
+                              label: Text(_selectedTime.format(context)),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+              const SizedBox(height: 16),
+
+              // Seats Section
+              Card(
+                child: Padding(
+                  padding: const EdgeInsets.all(16),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Row(
+                        children: [
+                          Icon(Icons.event_seat, color: Colors.purple),
+                          SizedBox(width: 8),
+                          Text('Available Seats', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+                        ],
+                      ),
+                      const SizedBox(height: 12),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          IconButton(
+                            onPressed: _seatsTotal > 1 ? () => setState(() => _seatsTotal--) : null,
+                            icon: const Icon(Icons.remove_circle_outline),
+                            iconSize: 32,
+                          ),
+                          const SizedBox(width: 16),
+                          Text(
+                            '$_seatsTotal',
+                            style: const TextStyle(fontSize: 32, fontWeight: FontWeight.bold),
+                          ),
+                          const SizedBox(width: 16),
+                          IconButton(
+                            onPressed: _seatsTotal < 7 ? () => setState(() => _seatsTotal++) : null,
+                            icon: const Icon(Icons.add_circle_outline),
+                            iconSize: 32,
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+              const SizedBox(height: 16),
+
+              // Notes Section
+              Card(
+                child: Padding(
+                  padding: const EdgeInsets.all(16),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Row(
+                        children: [
+                          Icon(Icons.notes, color: Colors.orange),
+                          SizedBox(width: 8),
+                          Text('Notes (optional)', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+                        ],
+                      ),
+                      const SizedBox(height: 12),
+                      TextFormField(
+                        controller: _notesController,
+                        decoration: const InputDecoration(
+                          hintText: 'Add any additional information...',
+                          border: OutlineInputBorder(),
+                        ),
+                        maxLines: 3,
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+              const SizedBox(height: 24),
+
+              // Error message
+              if (_error != null)
+                Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: Colors.red.shade100,
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Text(_error!, style: const TextStyle(color: Colors.red)),
+                ),
+              if (_error != null) const SizedBox(height: 16),
+
+              // Create Button
+              ElevatedButton.icon(
+                onPressed: _loading ? null : _createRide,
+                icon: _loading
+                    ? const SizedBox(
+                        width: 20,
+                        height: 20,
+                        child: CircularProgressIndicator(strokeWidth: 2),
+                      )
+                    : const Icon(Icons.add),
+                label: Text(_loading ? 'Creating...' : 'Create Ride'),
+                style: ElevatedButton.styleFrom(
+                  padding: const EdgeInsets.symmetric(vertical: 16),
+                ),
+              ),
             ],
           ),
         ),

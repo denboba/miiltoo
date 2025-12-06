@@ -8,6 +8,9 @@ import 'src/screens/create_ride_screen.dart';
 import 'src/screens/search_rides_screen.dart';
 import 'src/screens/chat_screen.dart';
 import 'src/screens/signup_screen.dart';
+import 'src/screens/profile_screen.dart';
+import 'src/screens/my_rides_screen.dart';
+import 'src/screens/my_requests_screen.dart';
 import 'firebase_options.dart';
 
 void main() async {
@@ -26,9 +29,39 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       title: 'Miilto',
+      debugShowCheckedModeBanner: false,
       theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
+        colorScheme: ColorScheme.fromSeed(
+          seedColor: Colors.deepPurple,
+          brightness: Brightness.light,
+        ),
         useMaterial3: true,
+        cardTheme: CardTheme(
+          elevation: 2,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
+        ),
+        inputDecorationTheme: InputDecorationTheme(
+          border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
+          contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+        ),
+        elevatedButtonTheme: ElevatedButtonThemeData(
+          style: ElevatedButton.styleFrom(
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12),
+            ),
+          ),
+        ),
+        outlinedButtonTheme: OutlinedButtonThemeData(
+          style: OutlinedButton.styleFrom(
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12),
+            ),
+          ),
+        ),
       ),
       // Use an AuthWrapper to show the correct start screen
       home: const AuthWrapper(),
@@ -39,6 +72,9 @@ class MyApp extends StatelessWidget {
         '/create': (context) => const CreateRideScreen(),
         '/search': (context) => const SearchRidesScreen(),
         '/chat': (context) => const ChatScreen(rideId: ''),
+        '/profile': (context) => const ProfileScreen(),
+        '/my-rides': (context) => const MyRidesScreen(),
+        '/my-requests': (context) => const MyRequestsScreen(),
       },
     );
   }
@@ -53,7 +89,18 @@ class AuthWrapper extends StatelessWidget {
       stream: FirebaseAuth.instance.authStateChanges(),
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
-          return const Scaffold(body: Center(child: CircularProgressIndicator()));
+          return const Scaffold(
+            body: Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  CircularProgressIndicator(),
+                  SizedBox(height: 16),
+                  Text('Loading...'),
+                ],
+              ),
+            ),
+          );
         }
         final user = snapshot.data;
         if (user != null) {

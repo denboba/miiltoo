@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 import '../services/firestore_repo.dart';
 import '../models/ride_model.dart';
 import 'package:miiltoo/src/screens/ride_detail_screen.dart';
@@ -12,46 +13,311 @@ class SearchRidesScreen extends StatefulWidget {
 
 class _SearchRidesScreenState extends State<SearchRidesScreen> {
   final _repo = FirestoreRepo();
-  List<Ride> _rides = [];
-  bool _loading = false;
+  final _searchController = TextEditingController();
+  DateTime? _selectedDate;
+  String _searchQuery = '';
 
-  void _search() async {
-    setState(() => _loading = true);
-    try {
-      final results = await _repo.searchRides(originLat: 0, originLng: 0);
-      setState(() => _rides = results);
-    } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error: $e')));
-    } finally {
-      setState(() => _loading = false);
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
+  }
+
+  Future<void> _selectDate() async {
+    final picked = await showDatePicker(
+      context: context,
+      initialDate: _selectedDate ?? DateTime.now(),
+      firstDate: DateTime.now(),
+      lastDate: DateTime.now().add(const Duration(days: 365)),
+    );
+    if (picked != null) {
+      setState(() => _selectedDate = picked);
     }
   }
 
-  @override
-  void initState() {
-    super.initState();
-    _search();
+  void _clearFilters() {
+    setState(() {
+      _selectedDate = null;
+      _searchQuery = '';
+      _searchController.clear();
+    });
+  }
+
+  List<Ride> _filterRides(List<Ride> rides) {
+    if (_searchQuery.isEmpty) return rides;
+    return rides.where((ride) {
+      final query = _searchQuery.toLowerCase();
+      final origin = (ride.origin.address ?? '').toLowerCase();
+      final dest = (ride.destination.address ?? '').toLowerCase();
+      return origin.contains(query) || dest.contains(query);
+    }).toList();
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Search Rides')),
-      body: _loading
-          ? const Center(child: CircularProgressIndicator())
-          : ListView.builder(
-              itemCount: _rides.length,
-              itemBuilder: (context, idx) {
-                final r = _rides[idx];
-                return ListTile(
-                  title: Text('${r.origin.address ?? '${r.origin.lat},${r.origin.lng}'} → ${r.destination.address ?? ''}'),
-                  subtitle: Text('Seats: ${r.seatsAvailable}/${r.seatsTotal} — ${r.dateTime.toLocal()}'),
-                  onTap: () {
-                    Navigator.push(context, MaterialPageRoute(builder: (_) => RideDetailScreen(ride: r)));
+      appBar: AppBar(
+        title: const Text('Find a Ride'),
+      ),
+      body: Column(
+        children: [
+          // Search and Filter Section
+          Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: Theme.of(context).colorScheme.surface,
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.grey.withValues(alpha: 0.1),
+                  blurRadius: 4,
+                  offset: const Offset(0, 2),
+                ),
+              ],
+            ),
+            child: Column(
+              children: [
+                // Search bar
+                TextField(
+                  controller: _searchController,
+                  decoration: InputDecoration(
+                    hintText: 'Search by location...',
+                    prefixIcon: const Icon(Icons.search),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    suffixIcon: _searchQuery.isNotEmpty
+                        ? IconButton(
+                            icon: const Icon(Icons.clear),
+                            onPressed: () {
+                              _searchController.clear();
+                              setState(() => _searchQuery = '');
+                            },
+                          )
+                        : null,
+                  ),
+                  onChanged: (value) => setState(() => _searchQuery = value),
+                ),
+                const SizedBox(height: 12),
+                // Filters row
+                Row(
+                  children: [
+                    Expanded(
+                      child: OutlinedButton.icon(
+                        onPressed: _selectDate,
+                        icon: const Icon(Icons.calendar_today, size: 18),
+                        label: Text(
+                          _selectedDate != null
+                              ? DateFormat('MMM d, yyyy').format(_selectedDate!)
+                              : 'Any Date',
+                        ),
+                      ),
+                    ),
+                    if (_selectedDate != null || _searchQuery.isNotEmpty) ...[
+                      const SizedBox(width: 8),
+                      TextButton(
+                        onPressed: _clearFilters,
+                        child: const Text('Clear'),
+                      ),
+                    ],
+                  ],
+                ),
+              ],
+            ),
+          ),
+          // Results
+          Expanded(
+            child: StreamBuilder<List<Ride>>(
+              stream: _repo.searchRidesStream(date: _selectedDate),
+              builder: (context, snapshot) {
+                if (snapshot.connectionState == ConnectionState.waiting) {
+                  return const Center(child: CircularProgressIndicator());
+                }
+                if (snapshot.hasError) {
+                  return Center(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        const Icon(Icons.error_outline, size: 48, color: Colors.red),
+                        const SizedBox(height: 16),
+                        Text('Error: ${snapshot.error}'),
+                        const SizedBox(height: 16),
+                        ElevatedButton(
+                          onPressed: () => setState(() {}),
+                          child: const Text('Retry'),
+                        ),
+                      ],
+                    ),
+                  );
+                }
+
+                final allRides = snapshot.data ?? [];
+                final rides = _filterRides(allRides);
+
+                if (rides.isEmpty) {
+                  return Center(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(Icons.directions_car_outlined, size: 64, color: Colors.grey.shade400),
+                        const SizedBox(height: 16),
+                        const Text(
+                          'No rides available',
+                          style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                        ),
+                        const SizedBox(height: 8),
+                        Text(
+                          _selectedDate != null || _searchQuery.isNotEmpty
+                              ? 'Try adjusting your filters'
+                              : 'Check back later for new rides',
+                          style: TextStyle(color: Colors.grey.shade600),
+                        ),
+                      ],
+                    ),
+                  );
+                }
+
+                return ListView.builder(
+                  padding: const EdgeInsets.all(8),
+                  itemCount: rides.length,
+                  itemBuilder: (context, idx) {
+                    final ride = rides[idx];
+                    return _RideCard(
+                      ride: ride,
+                      onTap: () => Navigator.push(
+                        context,
+                        MaterialPageRoute(builder: (_) => RideDetailScreen(ride: ride)),
+                      ),
+                    );
                   },
                 );
               },
             ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _RideCard extends StatelessWidget {
+  final Ride ride;
+  final VoidCallback onTap;
+
+  const _RideCard({required this.ride, required this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    return Card(
+      margin: const EdgeInsets.symmetric(vertical: 4),
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(12),
+        child: Padding(
+          padding: const EdgeInsets.all(12),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Route
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Column(
+                    children: [
+                      Icon(Icons.trip_origin, color: Colors.green.shade400, size: 20),
+                      Container(
+                        width: 2,
+                        height: 24,
+                        color: Colors.grey.shade300,
+                      ),
+                      const Icon(Icons.location_on, color: Colors.red, size: 20),
+                    ],
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          ride.origin.address ?? '${ride.origin.lat.toStringAsFixed(4)}, ${ride.origin.lng.toStringAsFixed(4)}',
+                          style: const TextStyle(fontWeight: FontWeight.w500),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                        const SizedBox(height: 20),
+                        Text(
+                          ride.destination.address ?? '${ride.destination.lat.toStringAsFixed(4)}, ${ride.destination.lng.toStringAsFixed(4)}',
+                          style: const TextStyle(fontWeight: FontWeight.w500),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+              const Divider(height: 24),
+              // Details row
+              Row(
+                children: [
+                  // Date/Time
+                  Expanded(
+                    child: Row(
+                      children: [
+                        const Icon(Icons.schedule, size: 16, color: Colors.grey),
+                        const SizedBox(width: 4),
+                        Text(
+                          DateFormat('MMM d, HH:mm').format(ride.dateTime.toLocal()),
+                          style: TextStyle(color: Colors.grey.shade700, fontSize: 13),
+                        ),
+                      ],
+                    ),
+                  ),
+                  // Seats
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                    decoration: BoxDecoration(
+                      color: ride.seatsAvailable > 0 ? Colors.green.shade100 : Colors.grey.shade200,
+                      borderRadius: BorderRadius.circular(4),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(
+                          Icons.event_seat,
+                          size: 16,
+                          color: ride.seatsAvailable > 0 ? Colors.green.shade700 : Colors.grey,
+                        ),
+                        const SizedBox(width: 4),
+                        Text(
+                          '${ride.seatsAvailable} seats',
+                          style: TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.bold,
+                            color: ride.seatsAvailable > 0 ? Colors.green.shade700 : Colors.grey,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+              if (ride.driverName != null) ...[
+                const SizedBox(height: 8),
+                Row(
+                  children: [
+                    const Icon(Icons.person, size: 16, color: Colors.grey),
+                    const SizedBox(width: 4),
+                    Text(
+                      ride.driverName!,
+                      style: TextStyle(color: Colors.grey.shade700, fontSize: 13),
+                    ),
+                  ],
+                ),
+              ],
+            ],
+          ),
+        ),
+      ),
     );
   }
 }
