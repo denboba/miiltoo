@@ -116,6 +116,7 @@ class _MyRidesScreenState extends State<MyRidesScreen> {
             return const Center(child: CircularProgressIndicator());
           }
           if (snapshot.hasError) {
+            print(snapshot.error);
             return Center(child: Text('Error: ${snapshot.error}'));
           }
           final rides = snapshot.data ?? [];
