@@ -3,6 +3,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import '../services/auth_service.dart';
 import '../services/firestore_repo.dart';
 import '../models/user_model.dart';
+import '../config/app_theme.dart';
 import 'search_rides_screen.dart';
 import 'my_rides_screen.dart';
 import 'my_requests_screen.dart';
@@ -112,39 +113,84 @@ class _HomeContent extends StatelessWidget {
           children: [
             // Welcome card
             Card(
-              child: Padding(
-                padding: const EdgeInsets.all(20),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      children: [
-                        CircleAvatar(
-                          radius: 30,
-                          backgroundColor: Theme.of(context).colorScheme.primary,
-                          child: const Icon(Icons.person, size: 30, color: Colors.white),
-                        ),
-                        const SizedBox(width: 16),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                'Welcome!',
-                                style: Theme.of(context).textTheme.headlineSmall,
+              elevation: 2,
+              child: Container(
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    colors: [
+                      AppTheme.primaryColor,
+                      AppTheme.secondaryColor,
+                    ],
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                  ),
+                  borderRadius: BorderRadius.circular(16),
+                ),
+                child: Padding(
+                  padding: const EdgeInsets.all(24),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          Container(
+                            width: 60,
+                            height: 60,
+                            decoration: BoxDecoration(
+                              color: Colors.white,
+                              borderRadius: BorderRadius.circular(30),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: Colors.black.withOpacity(0.1),
+                                  blurRadius: 8,
+                                  offset: const Offset(0, 4),
+                                ),
+                              ],
+                            ),
+                            child: ClipRRect(
+                              borderRadius: BorderRadius.circular(30),
+                              child: Image.asset(
+                                'assets/images/miiltoo_logo.png',
+                                fit: BoxFit.cover,
+                                errorBuilder: (context, error, stackTrace) {
+                                  return Icon(
+                                    Icons.person,
+                                    size: 30,
+                                    color: AppTheme.primaryColor,
+                                  );
+                                },
                               ),
-                              Text(
-                                user?.displayName ?? user?.email ?? 'Guest',
-                                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                                      color: Colors.grey,
-                                    ),
-                              ),
-                            ],
+                            ),
                           ),
-                        ),
-                      ],
-                    ),
-                  ],
+                          const SizedBox(width: 16),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                const Text(
+                                  'Welcome Back!',
+                                  style: TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 20,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                                const SizedBox(height: 4),
+                                Text(
+                                  user?.displayName ?? user?.email ?? 'Guest',
+                                  style: TextStyle(
+                                    color: Colors.white.withOpacity(0.9),
+                                    fontSize: 14,
+                                  ),
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
                 ),
               ),
             ),
@@ -163,8 +209,8 @@ class _HomeContent extends StatelessWidget {
                   child: _QuickActionCard(
                     icon: Icons.search,
                     title: 'Find a Ride',
-                    subtitle: 'Search for available rides',
-                    color: Colors.blue,
+                    subtitle: 'Search available rides',
+                    color: AppTheme.primaryColor,
                     onTap: () => Navigator.pushNamed(context, '/search'),
                   ),
                 ),
@@ -173,9 +219,33 @@ class _HomeContent extends StatelessWidget {
                   child: _QuickActionCard(
                     icon: Icons.add_circle,
                     title: 'Create Ride',
-                    subtitle: 'Offer a ride to others',
-                    color: Colors.green,
+                    subtitle: 'Offer a ride',
+                    color: AppTheme.successColor,
                     onTap: () => Navigator.pushNamed(context, '/create'),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 12),
+            Row(
+              children: [
+                Expanded(
+                  child: _QuickActionCard(
+                    icon: Icons.directions_car,
+                    title: 'My Rides',
+                    subtitle: 'View your rides',
+                    color: AppTheme.secondaryColor,
+                    onTap: () => Navigator.pushNamed(context, '/my-rides'),
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: _QuickActionCard(
+                    icon: Icons.bookmark,
+                    title: 'My Requests',
+                    subtitle: 'Track requests',
+                    color: AppTheme.warningColor,
+                    onTap: () => Navigator.pushNamed(context, '/my-requests'),
                   ),
                 ),
               ],
@@ -242,29 +312,53 @@ class _QuickActionCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Card(
+      elevation: 2,
+      shadowColor: color.withOpacity(0.3),
       child: InkWell(
         onTap: onTap,
-        borderRadius: BorderRadius.circular(12),
-        child: Padding(
+        borderRadius: BorderRadius.circular(16),
+        child: Container(
           padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(
+              color: color.withOpacity(0.3),
+              width: 1,
+            ),
+          ),
           child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              CircleAvatar(
-                backgroundColor: color.withValues(alpha: 0.2),
-                radius: 28,
+              Container(
+                width: 56,
+                height: 56,
+                decoration: BoxDecoration(
+                  color: color.withOpacity(0.15),
+                  borderRadius: BorderRadius.circular(16),
+                ),
                 child: Icon(icon, color: color, size: 28),
               ),
               const SizedBox(height: 12),
               Text(
                 title,
-                style: const TextStyle(fontWeight: FontWeight.bold),
+                style: const TextStyle(
+                  fontWeight: FontWeight.w600,
+                  fontSize: 14,
+                ),
                 textAlign: TextAlign.center,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
               ),
               const SizedBox(height: 4),
               Text(
                 subtitle,
-                style: TextStyle(fontSize: 12, color: Colors.grey.shade600),
+                style: TextStyle(
+                  fontSize: 11,
+                  color: Colors.grey.shade600,
+                ),
                 textAlign: TextAlign.center,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
               ),
             ],
           ),

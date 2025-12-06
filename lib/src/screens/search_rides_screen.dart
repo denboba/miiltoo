@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import '../services/firestore_repo.dart';
 import '../models/ride_model.dart';
+import '../config/app_theme.dart';
 import 'package:miiltoo/src/screens/ride_detail_screen.dart';
 
 class SearchRidesScreen extends StatefulWidget {
@@ -159,11 +160,11 @@ class _SearchRidesScreenState extends State<SearchRidesScreen> {
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        Icon(Icons.directions_car_outlined, size: 64, color: Colors.grey.shade400),
+                        Icon(Icons.directions_car_outlined, size: 80, color: Colors.grey.shade300),
                         const SizedBox(height: 16),
-                        const Text(
+                        Text(
                           'No rides available',
-                          style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                          style: Theme.of(context).textTheme.titleLarge,
                         ),
                         const SizedBox(height: 8),
                         Text(
@@ -178,7 +179,7 @@ class _SearchRidesScreenState extends State<SearchRidesScreen> {
                 }
 
                 return ListView.builder(
-                  padding: const EdgeInsets.all(8),
+                  padding: const EdgeInsets.all(16),
                   itemCount: rides.length,
                   itemBuilder: (context, idx) {
                     final ride = rides[idx];
@@ -209,28 +210,79 @@ class _RideCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Card(
-      margin: const EdgeInsets.symmetric(vertical: 4),
+      margin: const EdgeInsets.only(bottom: 12),
+      elevation: 1,
       child: InkWell(
         onTap: onTap,
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(16),
         child: Padding(
-          padding: const EdgeInsets.all(12),
+          padding: const EdgeInsets.all(16),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
+              // Driver info
+              Row(
+                children: [
+                  CircleAvatar(
+                    backgroundColor: AppTheme.primaryColor.withOpacity(0.15),
+                    radius: 18,
+                    child: Icon(Icons.person, color: AppTheme.primaryColor, size: 20),
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      ride.driverName ?? 'Driver',
+                      style: const TextStyle(
+                        fontWeight: FontWeight.w600,
+                        fontSize: 14,
+                      ),
+                    ),
+                  ),
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                    decoration: BoxDecoration(
+                      color: AppTheme.getStatusColor(ride.status).withOpacity(0.15),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Text(
+                      ride.status.toUpperCase(),
+                      style: TextStyle(
+                        fontSize: 10,
+                        fontWeight: FontWeight.bold,
+                        color: AppTheme.getStatusColor(ride.status),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 16),
               // Route
               Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Column(
                     children: [
-                      Icon(Icons.trip_origin, color: Colors.green.shade400, size: 20),
+                      Container(
+                        width: 12,
+                        height: 12,
+                        decoration: BoxDecoration(
+                          color: AppTheme.successColor,
+                          shape: BoxShape.circle,
+                        ),
+                      ),
                       Container(
                         width: 2,
-                        height: 24,
+                        height: 32,
                         color: Colors.grey.shade300,
                       ),
-                      const Icon(Icons.location_on, color: Colors.red, size: 20),
+                      Container(
+                        width: 12,
+                        height: 12,
+                        decoration: BoxDecoration(
+                          color: AppTheme.errorColor,
+                          shape: BoxShape.circle,
+                        ),
+                      ),
                     ],
                   ),
                   const SizedBox(width: 12),
@@ -240,14 +292,20 @@ class _RideCard extends StatelessWidget {
                       children: [
                         Text(
                           ride.origin.address ?? '${ride.origin.lat.toStringAsFixed(4)}, ${ride.origin.lng.toStringAsFixed(4)}',
-                          style: const TextStyle(fontWeight: FontWeight.w500),
+                          style: const TextStyle(
+                            fontWeight: FontWeight.w500,
+                            fontSize: 14,
+                          ),
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                         ),
-                        const SizedBox(height: 20),
+                        const SizedBox(height: 24),
                         Text(
                           ride.destination.address ?? '${ride.destination.lat.toStringAsFixed(4)}, ${ride.destination.lng.toStringAsFixed(4)}',
-                          style: const TextStyle(fontWeight: FontWeight.w500),
+                          style: const TextStyle(
+                            fontWeight: FontWeight.w500,
+                            fontSize: 14,
+                          ),
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                         ),
@@ -256,29 +314,28 @@ class _RideCard extends StatelessWidget {
                   ),
                 ],
               ),
-              const Divider(height: 24),
+              const SizedBox(height: 16),
+              const Divider(height: 1),
+              const SizedBox(height: 12),
               // Details row
               Row(
                 children: [
                   // Date/Time
-                  Expanded(
-                    child: Row(
-                      children: [
-                        const Icon(Icons.schedule, size: 16, color: Colors.grey),
-                        const SizedBox(width: 4),
-                        Text(
-                          DateFormat('MMM d, HH:mm').format(ride.dateTime.toLocal()),
-                          style: TextStyle(color: Colors.grey.shade700, fontSize: 13),
-                        ),
-                      ],
-                    ),
+                  Icon(Icons.schedule, size: 16, color: AppTheme.textSecondary),
+                  const SizedBox(width: 4),
+                  Text(
+                    DateFormat('MMM d, HH:mm').format(ride.dateTime.toLocal()),
+                    style: TextStyle(color: AppTheme.textSecondary, fontSize: 13),
                   ),
+                  const Spacer(),
                   // Seats
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
                     decoration: BoxDecoration(
-                      color: ride.seatsAvailable > 0 ? Colors.green.shade100 : Colors.grey.shade200,
-                      borderRadius: BorderRadius.circular(4),
+                      color: ride.seatsAvailable > 0 
+                          ? AppTheme.successColor.withOpacity(0.15) 
+                          : Colors.grey.shade200,
+                      borderRadius: BorderRadius.circular(8),
                     ),
                     child: Row(
                       mainAxisSize: MainAxisSize.min,
@@ -286,15 +343,15 @@ class _RideCard extends StatelessWidget {
                         Icon(
                           Icons.event_seat,
                           size: 16,
-                          color: ride.seatsAvailable > 0 ? Colors.green.shade700 : Colors.grey,
+                          color: ride.seatsAvailable > 0 ? AppTheme.successColor : Colors.grey,
                         ),
                         const SizedBox(width: 4),
                         Text(
                           '${ride.seatsAvailable} seats',
                           style: TextStyle(
                             fontSize: 12,
-                            fontWeight: FontWeight.bold,
-                            color: ride.seatsAvailable > 0 ? Colors.green.shade700 : Colors.grey,
+                            fontWeight: FontWeight.w600,
+                            color: ride.seatsAvailable > 0 ? AppTheme.successColor : Colors.grey,
                           ),
                         ),
                       ],

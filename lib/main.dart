@@ -12,6 +12,7 @@ import 'src/screens/profile_screen.dart';
 import 'src/screens/my_rides_screen.dart';
 import 'src/screens/my_requests_screen.dart';
 import 'src/utils/logger.dart';
+import 'src/config/app_theme.dart';
 import 'firebase_options.dart';
 
 void main() async {
@@ -38,39 +39,7 @@ class MyApp extends StatelessWidget {
     return MaterialApp(
       title: 'Miilto',
       debugShowCheckedModeBanner: false,
-      theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(
-          seedColor: Colors.deepPurple,
-          brightness: Brightness.light,
-        ),
-        useMaterial3: true,
-        cardTheme: CardThemeData(
-          elevation: 2,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
-          ),
-        ),
-        inputDecorationTheme: InputDecorationTheme(
-          border: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(12),
-          ),
-          contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-        ),
-        elevatedButtonTheme: ElevatedButtonThemeData(
-          style: ElevatedButton.styleFrom(
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(12),
-            ),
-          ),
-        ),
-        outlinedButtonTheme: OutlinedButtonThemeData(
-          style: OutlinedButton.styleFrom(
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(12),
-            ),
-          ),
-        ),
-      ),
+      theme: AppTheme.lightTheme,
       // Use an AuthWrapper to show the correct start screen
       home: const AuthWrapper(),
       routes: {

@@ -3,6 +3,8 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:intl/intl.dart';
 import '../models/ride_model.dart';
 import '../services/firestore_repo.dart';
+import '../widgets/ride_map_widget.dart';
+import '../config/app_theme.dart';
 import 'chat_screen.dart';
 
 class RideDetailScreen extends StatefulWidget {
@@ -30,18 +32,7 @@ class _RideDetailScreenState extends State<RideDetailScreen> {
   }
 
   Color _getStatusColor(String status) {
-    switch (status) {
-      case 'open':
-        return Colors.green;
-      case 'ongoing':
-        return Colors.blue;
-      case 'completed':
-        return Colors.grey;
-      case 'cancelled':
-        return Colors.red;
-      default:
-        return Colors.grey;
-    }
+    return AppTheme.getStatusColor(status);
   }
 
   void _requestSeat() async {
@@ -130,27 +121,10 @@ class _RideDetailScreenState extends State<RideDetailScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                // Map placeholder
-                Container(
-                  height: 200,
-                  color: Colors.grey.shade200,
-                  child: Center(
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Icon(Icons.map, size: 64, color: Colors.grey.shade400),
-                        const SizedBox(height: 8),
-                        Text(
-                          'Route Map',
-                          style: TextStyle(color: Colors.grey.shade600),
-                        ),
-                        Text(
-                          '${ride.origin.lat.toStringAsFixed(4)}, ${ride.origin.lng.toStringAsFixed(4)} → ${ride.destination.lat.toStringAsFixed(4)}, ${ride.destination.lng.toStringAsFixed(4)}',
-                          style: TextStyle(fontSize: 12, color: Colors.grey.shade500),
-                        ),
-                      ],
-                    ),
-                  ),
+                // Map with route
+                Padding(
+                  padding: const EdgeInsets.all(16),
+                  child: RideMapWidget(ride: ride, height: 250),
                 ),
 
                 Padding(
@@ -167,13 +141,24 @@ class _RideDetailScreenState extends State<RideDetailScreen> {
                               color: _getStatusColor(ride.status),
                               borderRadius: BorderRadius.circular(16),
                             ),
-                            child: Text(
-                              ride.status.toUpperCase(),
-                              style: const TextStyle(
-                                color: Colors.white,
-                                fontWeight: FontWeight.bold,
-                                fontSize: 12,
-                              ),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Icon(
+                                  AppTheme.getStatusIcon(ride.status),
+                                  color: Colors.white,
+                                  size: 16,
+                                ),
+                                const SizedBox(width: 4),
+                                Text(
+                                  ride.status.toUpperCase(),
+                                  style: const TextStyle(
+                                    color: Colors.white,
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 12,
+                                  ),
+                                ),
+                              ],
                             ),
                           ),
                           const Spacer(),
@@ -181,13 +166,13 @@ class _RideDetailScreenState extends State<RideDetailScreen> {
                             Container(
                               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                               decoration: BoxDecoration(
-                                color: Colors.green.shade100,
+                                color: AppTheme.successColor.withOpacity(0.15),
                                 borderRadius: BorderRadius.circular(16),
                               ),
                               child: Text(
                                 '${ride.seatsAvailable} seats available',
                                 style: TextStyle(
-                                  color: Colors.green.shade800,
+                                  color: AppTheme.successColor,
                                   fontWeight: FontWeight.bold,
                                   fontSize: 12,
                                 ),
@@ -200,7 +185,7 @@ class _RideDetailScreenState extends State<RideDetailScreen> {
                       // Origin
                       _buildLocationRow(
                         icon: Icons.trip_origin,
-                        color: Colors.green,
+                        color: AppTheme.successColor,
                         title: 'From',
                         address: ride.origin.address ?? '${ride.origin.lat}, ${ride.origin.lng}',
                       ),
@@ -209,7 +194,7 @@ class _RideDetailScreenState extends State<RideDetailScreen> {
                       // Destination
                       _buildLocationRow(
                         icon: Icons.location_on,
-                        color: Colors.red,
+                        color: AppTheme.errorColor,
                         title: 'To',
                         address: ride.destination.address ?? '${ride.destination.lat}, ${ride.destination.lng}',
                       ),
@@ -218,7 +203,7 @@ class _RideDetailScreenState extends State<RideDetailScreen> {
                       // Date & Time
                       Card(
                         child: ListTile(
-                          leading: const Icon(Icons.schedule, color: Colors.blue),
+                          leading: Icon(Icons.schedule, color: AppTheme.primaryColor),
                           title: Text(DateFormat('EEEE, MMM d, yyyy').format(ride.dateTime.toLocal())),
                           subtitle: Text(DateFormat('HH:mm').format(ride.dateTime.toLocal())),
                         ),
@@ -228,7 +213,7 @@ class _RideDetailScreenState extends State<RideDetailScreen> {
                       // Seats
                       Card(
                         child: ListTile(
-                          leading: const Icon(Icons.event_seat, color: Colors.purple),
+                          leading: Icon(Icons.event_seat, color: AppTheme.secondaryColor),
                           title: const Text('Available Seats'),
                           subtitle: Text('${ride.seatsAvailable} of ${ride.seatsTotal} seats'),
                           trailing: Row(

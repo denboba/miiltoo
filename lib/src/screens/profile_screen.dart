@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import '../models/user_model.dart';
 import '../services/firestore_repo.dart';
+import '../config/app_theme.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
@@ -113,33 +114,50 @@ class _ProfileScreenState extends State<ProfileScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  // Profile Picture
+                  // Profile Picture with Gradient Background
                   Center(
-                    child: CircleAvatar(
-                      radius: 50,
-                      backgroundColor: Theme.of(context).colorScheme.primary,
-                      child: _user?.photoUrl != null && _user!.photoUrl!.isNotEmpty
-                          ? ClipOval(
-                              child: Image.network(
-                                _user!.photoUrl!,
-                                width: 100,
-                                height: 100,
-                                fit: BoxFit.cover,
-                                errorBuilder: (_, __, ___) => const Icon(
-                                  Icons.person,
-                                  size: 50,
-                                  color: Colors.white,
+                    child: Container(
+                      padding: const EdgeInsets.all(4),
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        gradient: LinearGradient(
+                          colors: [AppTheme.primaryColor, AppTheme.secondaryColor],
+                        ),
+                      ),
+                      child: Container(
+                        width: 120,
+                        height: 120,
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          color: Colors.white,
+                        ),
+                        child: ClipOval(
+                          child: _user?.photoUrl != null && _user!.photoUrl!.isNotEmpty
+                              ? Image.network(
+                                  _user!.photoUrl!,
+                                  fit: BoxFit.cover,
+                                  errorBuilder: (_, __, ___) => Container(
+                                    color: AppTheme.primaryColor.withOpacity(0.1),
+                                    child: Icon(
+                                      Icons.person,
+                                      size: 60,
+                                      color: AppTheme.primaryColor,
+                                    ),
+                                  ),
+                                )
+                              : Container(
+                                  color: AppTheme.primaryColor.withOpacity(0.1),
+                                  child: Icon(
+                                    Icons.person,
+                                    size: 60,
+                                    color: AppTheme.primaryColor,
+                                  ),
                                 ),
-                              ),
-                            )
-                          : const Icon(
-                              Icons.person,
-                              size: 50,
-                              color: Colors.white,
-                            ),
+                        ),
+                      ),
                     ),
                   ),
-                  const SizedBox(height: 24),
+                  const SizedBox(height: 32),
 
                   // Email (read-only)
                   TextField(
@@ -147,7 +165,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     decoration: const InputDecoration(
                       labelText: 'Email',
                       prefixIcon: Icon(Icons.email),
-                      border: OutlineInputBorder(),
                     ),
                     enabled: false,
                   ),
@@ -159,7 +176,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     decoration: const InputDecoration(
                       labelText: 'Full Name',
                       prefixIcon: Icon(Icons.person),
-                      border: OutlineInputBorder(),
                     ),
                   ),
                   const SizedBox(height: 16),
@@ -168,30 +184,54 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   TextField(
                     controller: _phoneController,
                     decoration: const InputDecoration(
-                      labelText: 'Phone Number',
+                      labelText: 'Phone Number (Optional)',
                       prefixIcon: Icon(Icons.phone),
-                      border: OutlineInputBorder(),
                     ),
                     keyboardType: TextInputType.phone,
                   ),
                   const SizedBox(height: 16),
 
-                  // Role Selection
-                  DropdownButtonFormField<String>(
-                    value: _role,
-                    decoration: const InputDecoration(
-                      labelText: 'Role',
-                      prefixIcon: Icon(Icons.badge),
-                      border: OutlineInputBorder(),
+                  // Role Selection with Card
+                  Card(
+                    child: Padding(
+                      padding: const EdgeInsets.all(16),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'I want to use Miilto as:',
+                            style: Theme.of(context).textTheme.titleMedium,
+                          ),
+                          const SizedBox(height: 16),
+                          _RoleOption(
+                            value: 'passenger',
+                            groupValue: _role,
+                            icon: Icons.search,
+                            title: 'Passenger',
+                            subtitle: 'Find and book rides',
+                            onChanged: (v) => setState(() => _role = v!),
+                          ),
+                          const SizedBox(height: 12),
+                          _RoleOption(
+                            value: 'driver',
+                            groupValue: _role,
+                            icon: Icons.directions_car,
+                            title: 'Driver',
+                            subtitle: 'Offer rides to others',
+                            onChanged: (v) => setState(() => _role = v!),
+                          ),
+                          const SizedBox(height: 12),
+                          _RoleOption(
+                            value: 'both',
+                            groupValue: _role,
+                            icon: Icons.sync_alt,
+                            title: 'Both',
+                            subtitle: 'Find and offer rides',
+                            onChanged: (v) => setState(() => _role = v!),
+                          ),
+                        ],
+                      ),
                     ),
-                    items: const [
-                      DropdownMenuItem(value: 'passenger', child: Text('Passenger')),
-                      DropdownMenuItem(value: 'driver', child: Text('Driver')),
-                      DropdownMenuItem(value: 'both', child: Text('Both')),
-                    ],
-                    onChanged: (v) {
-                      if (v != null) setState(() => _role = v);
-                    },
                   ),
                   const SizedBox(height: 24),
 
@@ -228,6 +268,92 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 ],
               ),
             ),
+    );
+  }
+}
+
+class _RoleOption extends StatelessWidget {
+  final String value;
+  final String groupValue;
+  final IconData icon;
+  final String title;
+  final String subtitle;
+  final ValueChanged<String?> onChanged;
+
+  const _RoleOption({
+    required this.value,
+    required this.groupValue,
+    required this.icon,
+    required this.title,
+    required this.subtitle,
+    required this.onChanged,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final isSelected = value == groupValue;
+    return InkWell(
+      onTap: () => onChanged(value),
+      borderRadius: BorderRadius.circular(12),
+      child: Container(
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(
+            color: isSelected ? AppTheme.primaryColor : Colors.grey.shade300,
+            width: isSelected ? 2 : 1,
+          ),
+          color: isSelected ? AppTheme.primaryColor.withOpacity(0.05) : Colors.transparent,
+        ),
+        child: Row(
+          children: [
+            Container(
+              width: 48,
+              height: 48,
+              decoration: BoxDecoration(
+                color: isSelected 
+                    ? AppTheme.primaryColor.withOpacity(0.15)
+                    : Colors.grey.shade100,
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Icon(
+                icon,
+                color: isSelected ? AppTheme.primaryColor : Colors.grey.shade600,
+              ),
+            ),
+            const SizedBox(width: 16),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    title,
+                    style: TextStyle(
+                      fontWeight: FontWeight.w600,
+                      fontSize: 16,
+                      color: isSelected ? AppTheme.primaryColor : AppTheme.textPrimary,
+                    ),
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    subtitle,
+                    style: TextStyle(
+                      fontSize: 13,
+                      color: AppTheme.textSecondary,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            Radio<String>(
+              value: value,
+              groupValue: groupValue,
+              onChanged: onChanged,
+              activeColor: AppTheme.primaryColor,
+            ),
+          ],
+        ),
+      ),
     );
   }
 }
