@@ -138,7 +138,15 @@ class _MyRequestsScreenState extends State<MyRequestsScreen> {
       body: _loading
           ? const Center(child: CircularProgressIndicator())
           : _error != null
-              ? Center(child: Text('Error: $_error'))
+              ? GestureDetector(
+        child: Center(child: Text(_error!),),
+         onTap: (){
+           print(_error);
+
+         },
+
+
+      )
               : _requestsWithRides.isEmpty
                   ? Center(
                       child: Column(
