@@ -145,14 +145,14 @@ class AppTheme {
     navigationBarTheme: NavigationBarThemeData(
       backgroundColor: surfaceColor,
       indicatorColor: primaryColor.withOpacity(0.15),
-      iconTheme: WidgetStateProperty.resolveWith((states) {
-        if (states.contains(WidgetState.selected)) {
+      iconTheme: MaterialStateProperty.resolveWith((states) {
+        if (states.contains(MaterialState.selected)) {
           return const IconThemeData(color: primaryColor);
         }
         return const IconThemeData(color: textSecondary);
       }),
-      labelTextStyle: WidgetStateProperty.resolveWith((states) {
-        if (states.contains(WidgetState.selected)) {
+      labelTextStyle: MaterialStateProperty.resolveWith((states) {
+        if (states.contains(MaterialState.selected)) {
           return const TextStyle(
             color: primaryColor,
             fontSize: 12,
