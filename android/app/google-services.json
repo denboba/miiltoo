@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "259279884876",
+    "project_id": "miiltoo",
+    "storage_bucket": "miiltoo.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:259279884876:android:f55d70e7661198f997dae9",
+        "android_client_info": {
+          "package_name": "com.example.miiltoo"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBFJ58tk1ISIKQPFjVWCxcu8Um6W-9m7fw"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
