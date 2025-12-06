@@ -130,10 +130,10 @@ class _CreateRideScreenState extends State<CreateRideScreen> {
         notes: _notesController.text.trim().isNotEmpty ? _notesController.text.trim() : null,
       );
 
-      final rideId = await _repo.createRide(ride);
+      await _repo.createRide(ride);
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Ride created successfully!')),
+        const SnackBar(content: Text('Ride created successfully!')),
       );
       Navigator.pop(context);
     } catch (e) {
