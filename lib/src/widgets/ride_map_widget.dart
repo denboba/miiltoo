@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
+import 'package:flutter_polyline_points/flutter_polyline_points.dart';
 import '../models/ride_model.dart';
 import '../config/app_theme.dart';
 
@@ -21,6 +22,7 @@ class _RideMapWidgetState extends State<RideMapWidget> {
   GoogleMapController? _mapController;
   Set<Marker> _markers = {};
   Set<Polyline> _polylines = {};
+  bool _loadingRoute = false;
 
   @override
   void initState() {
@@ -55,23 +57,69 @@ class _RideMapWidgetState extends State<RideMapWidget> {
     });
   }
 
-  void _setupPolyline() {
-    // Create a simple straight line between origin and destination
-    // In production, you would use Google Directions API to get the actual route
-    final polyline = Polyline(
-      polylineId: const PolylineId('route'),
-      points: [
-        LatLng(widget.ride.origin.lat, widget.ride.origin.lng),
-        LatLng(widget.ride.destination.lat, widget.ride.destination.lng),
-      ],
-      color: AppTheme.primaryColor,
-      width: 4,
-      patterns: [PatternItem.dot, PatternItem.gap(10)],
-    );
+  Future<void> _setupPolyline() async {
+    setState(() => _loadingRoute = true);
+    
+    try {
+      PolylinePoints polylinePoints = PolylinePoints();
+      
+      // Attempt to get route from Google Directions API
+      // Note: This requires a Google Maps API key with Directions API enabled
+      PolylineResult result = await polylinePoints.getRouteBetweenCoordinates(
+        googleApiKey: '', // API key should be stored securely, not hardcoded
+        request: PolylineRequest(
+          origin: PointLatLng(widget.ride.origin.lat, widget.ride.origin.lng),
+          destination: PointLatLng(widget.ride.destination.lat, widget.ride.destination.lng),
+          mode: TravelMode.driving,
+        ),
+      );
 
-    setState(() {
-      _polylines = {polyline};
-    });
+      List<LatLng> polylineCoordinates = [];
+
+      if (result.points.isNotEmpty) {
+        // Use the route from Directions API
+        for (var point in result.points) {
+          polylineCoordinates.add(LatLng(point.latitude, point.longitude));
+        }
+      } else {
+        // Fallback to straight line if API call fails or no API key
+        polylineCoordinates = [
+          LatLng(widget.ride.origin.lat, widget.ride.origin.lng),
+          LatLng(widget.ride.destination.lat, widget.ride.destination.lng),
+        ];
+      }
+
+      final polyline = Polyline(
+        polylineId: const PolylineId('route'),
+        points: polylineCoordinates,
+        color: AppTheme.primaryColor,
+        width: 5,
+        // Use solid line for actual routes
+        patterns: result.points.isEmpty ? [PatternItem.dot, PatternItem.gap(10)] : [],
+      );
+
+      setState(() {
+        _polylines = {polyline};
+        _loadingRoute = false;
+      });
+    } catch (e) {
+      // Fallback to simple straight line on error
+      final polyline = Polyline(
+        polylineId: const PolylineId('route'),
+        points: [
+          LatLng(widget.ride.origin.lat, widget.ride.origin.lng),
+          LatLng(widget.ride.destination.lat, widget.ride.destination.lng),
+        ],
+        color: AppTheme.primaryColor,
+        width: 4,
+        patterns: [PatternItem.dot, PatternItem.gap(10)],
+      );
+
+      setState(() {
+        _polylines = {polyline};
+        _loadingRoute = false;
+      });
+    }
   }
 
   LatLngBounds _getBounds() {
@@ -115,36 +163,76 @@ class _RideMapWidgetState extends State<RideMapWidget> {
           ),
         ],
       ),
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(16),
-        child: GoogleMap(
-          initialCameraPosition: CameraPosition(
-            target: center,
-            zoom: 12,
+      child: Stack(
+        children: [
+          ClipRRect(
+            borderRadius: BorderRadius.circular(16),
+            child: GoogleMap(
+              initialCameraPosition: CameraPosition(
+                target: center,
+                zoom: 12,
+              ),
+              onMapCreated: (controller) {
+                _mapController = controller;
+                // Fit bounds to show both markers
+                try {
+                  final bounds = _getBounds();
+                  controller.animateCamera(
+                    CameraUpdate.newLatLngBounds(bounds, 50),
+                  );
+                } catch (e) {
+                  // If bounds are invalid, keep default zoom
+                }
+              },
+              markers: _markers,
+              polylines: _polylines,
+              myLocationButtonEnabled: false,
+              zoomControlsEnabled: false,
+              mapToolbarEnabled: false,
+              compassEnabled: false,
+              rotateGesturesEnabled: false,
+              scrollGesturesEnabled: true,
+              zoomGesturesEnabled: true,
+              tiltGesturesEnabled: false,
+            ),
           ),
-          onMapCreated: (controller) {
-            _mapController = controller;
-            // Fit bounds to show both markers
-            try {
-              final bounds = _getBounds();
-              controller.animateCamera(
-                CameraUpdate.newLatLngBounds(bounds, 50),
-              );
-            } catch (e) {
-              // If bounds are invalid, keep default zoom
-            }
-          },
-          markers: _markers,
-          polylines: _polylines,
-          myLocationButtonEnabled: false,
-          zoomControlsEnabled: false,
-          mapToolbarEnabled: false,
-          compassEnabled: false,
-          rotateGesturesEnabled: false,
-          scrollGesturesEnabled: true,
-          zoomGesturesEnabled: true,
-          tiltGesturesEnabled: false,
-        ),
+          if (_loadingRoute)
+            Positioned(
+              bottom: 8,
+              right: 8,
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(20),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.1),
+                      blurRadius: 4,
+                    ),
+                  ],
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    SizedBox(
+                      width: 12,
+                      height: 12,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                        valueColor: AlwaysStoppedAnimation<Color>(AppTheme.primaryColor),
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    const Text(
+                      'Loading route...',
+                      style: TextStyle(fontSize: 12),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+        ],
       ),
     );
   }

@@ -114,10 +114,11 @@ class _MyRequestsScreenState extends State<MyRequestsScreen> {
           ),
         ],
       ),
-      body: _loading
-          ? const Center(child: CircularProgressIndicator())
-          : _error != null
-              ? GestureDetector(
+      body: SafeArea(
+        child: _loading
+            ? const Center(child: CircularProgressIndicator())
+            : _error != null
+                ? GestureDetector(
         child: Center(child: Text(_error!),),
          onTap: (){
            print(_error);
@@ -253,6 +254,7 @@ class _MyRequestsScreenState extends State<MyRequestsScreen> {
                         },
                       ),
                     ),
+      ),
     );
   }
 }

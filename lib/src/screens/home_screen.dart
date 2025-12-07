@@ -106,9 +106,10 @@ class _HomeContent extends StatelessWidget {
           ),
         ],
       ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16),
-        child: Column(
+      body: SafeArea(
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.all(16),
+          child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             // Welcome card
@@ -288,6 +289,8 @@ class _HomeContent extends StatelessWidget {
               ),
             ),
           ],
+        ),
+      ),
         ),
       ),
     );

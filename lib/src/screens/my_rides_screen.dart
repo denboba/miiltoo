@@ -84,8 +84,10 @@ class _MyRidesScreenState extends State<MyRidesScreen> {
   Widget build(BuildContext context) {
     final uid = FirebaseAuth.instance.currentUser?.uid;
     if (uid == null) {
-      return const Scaffold(
-        body: Center(child: Text('Please log in to view your rides')),
+      return Scaffold(
+        body: SafeArea(
+          child: const Center(child: Text('Please log in to view your rides')),
+        ),
       );
     }
 
@@ -93,7 +95,8 @@ class _MyRidesScreenState extends State<MyRidesScreen> {
       appBar: AppBar(
         title: const Text('My Rides'),
       ),
-      body: StreamBuilder<List<Ride>>(
+      body: SafeArea(
+        child: StreamBuilder<List<Ride>>(
         stream: _repo.driverRidesStream(uid),
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
@@ -213,6 +216,7 @@ class _MyRidesScreenState extends State<MyRidesScreen> {
           );
         },
       ),
+        ),
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () => Navigator.pushNamed(context, '/create'),
         icon: const Icon(Icons.add),

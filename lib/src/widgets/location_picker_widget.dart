@@ -118,10 +118,12 @@ class _LocationPickerWidgetState extends State<LocationPickerWidget> {
   }
 
   void _confirmSelection() {
+    // For better UX, display "Selected Location" instead of coordinates
+    // The actual address can be populated through reverse geocoding in production
     final location = LatLngPoint(
       lat: _selectedPosition.latitude,
       lng: _selectedPosition.longitude,
-      address: '${_selectedPosition.latitude.toStringAsFixed(4)}, ${_selectedPosition.longitude.toStringAsFixed(4)}',
+      address: 'Selected Location (${_selectedPosition.latitude.toStringAsFixed(4)}, ${_selectedPosition.longitude.toStringAsFixed(4)})',
     );
     widget.onLocationSelected(location);
     Navigator.of(context).pop();
@@ -152,9 +154,10 @@ class _LocationPickerWidgetState extends State<LocationPickerWidget> {
           ),
         ],
       ),
-      body: Stack(
-        children: [
-          GoogleMap(
+      body: SafeArea(
+        child: Stack(
+          children: [
+            GoogleMap(
             initialCameraPosition: CameraPosition(
               target: _selectedPosition,
               zoom: 14,
@@ -235,12 +238,9 @@ class _LocationPickerWidgetState extends State<LocationPickerWidget> {
                     ),
                     const SizedBox(height: 8),
                     Text(
-                      'Lat: ${_selectedPosition.latitude.toStringAsFixed(6)}',
+                      'Tap the map or drag the marker to select a location',
                       style: Theme.of(context).textTheme.bodySmall,
-                    ),
-                    Text(
-                      'Lng: ${_selectedPosition.longitude.toStringAsFixed(6)}',
-                      style: Theme.of(context).textTheme.bodySmall,
+                      textAlign: TextAlign.center,
                     ),
                     const SizedBox(height: 12),
                     SizedBox(
@@ -258,6 +258,7 @@ class _LocationPickerWidgetState extends State<LocationPickerWidget> {
           ),
         ],
       ),
+        ),
     );
   }
 }
