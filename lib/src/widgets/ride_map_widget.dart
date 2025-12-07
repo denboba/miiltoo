@@ -71,6 +71,7 @@ class _RideMapWidgetState extends State<RideMapWidget> {
         throw Exception('Google Maps API key not configured');
       }
       
+      // Only instantiate PolylinePoints if we have a valid API key
       PolylinePoints polylinePoints = PolylinePoints(apiKey: apiKey);
       
       PolylineResult result = await polylinePoints.getRouteBetweenCoordinates(
