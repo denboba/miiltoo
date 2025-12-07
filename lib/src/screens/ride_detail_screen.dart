@@ -110,14 +110,15 @@ class _RideDetailScreenState extends State<RideDetailScreen> {
             ),
         ],
       ),
-      body: StreamBuilder<Ride?>(
-        stream: _repo.rideStream(_ride.id),
-        initialData: _ride,
-        builder: (context, snapshot) {
-          final ride = snapshot.data ?? _ride;
-          _ride = ride;
+      body: SafeArea(
+        child: StreamBuilder<Ride?>(
+          stream: _repo.rideStream(_ride.id),
+          initialData: _ride,
+          builder: (context, snapshot) {
+            final ride = snapshot.data ?? _ride;
+            _ride = ride;
 
-          return SingleChildScrollView(
+            return SingleChildScrollView(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
@@ -306,6 +307,7 @@ class _RideDetailScreenState extends State<RideDetailScreen> {
           );
         },
       ),
+        ),
     );
   }
 

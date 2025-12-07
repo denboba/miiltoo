@@ -88,10 +88,11 @@ class _ManageRequestsScreenState extends State<ManageRequestsScreen> {
       appBar: AppBar(
         title: const Text('Manage Requests'),
       ),
-      body: Column(
-        children: [
-          // Ride info header
-          Container(
+      body: SafeArea(
+        child: Column(
+          children: [
+            // Ride info header
+            Container(
             padding: const EdgeInsets.all(16),
             color: Theme.of(context).colorScheme.surfaceContainerHighest,
             child: Column(
@@ -236,6 +237,7 @@ class _ManageRequestsScreenState extends State<ManageRequestsScreen> {
           ),
         ],
       ),
+        ),
     );
   }
 }

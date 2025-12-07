@@ -114,18 +114,41 @@ class _MyRequestsScreenState extends State<MyRequestsScreen> {
           ),
         ],
       ),
-      body: _loading
-          ? const Center(child: CircularProgressIndicator())
-          : _error != null
-              ? GestureDetector(
-        child: Center(child: Text(_error!),),
-         onTap: (){
-           print(_error);
-
-         },
-
-
-      )
+      body: SafeArea(
+        child: _loading
+            ? const Center(child: CircularProgressIndicator())
+            : _error != null
+                ? Center(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(Icons.error_outline, size: 64, color: Colors.red.shade300),
+                        const SizedBox(height: 16),
+                        Text(
+                          'Error loading requests',
+                          style: TextStyle(fontSize: 18, color: Colors.grey.shade700),
+                        ),
+                        const SizedBox(height: 8),
+                        Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 32),
+                          child: Text(
+                            _error!,
+                            style: const TextStyle(fontSize: 14, color: Colors.grey),
+                            textAlign: TextAlign.center,
+                          ),
+                        ),
+                        const SizedBox(height: 16),
+                        ElevatedButton.icon(
+                          onPressed: () {
+                            setState(() => _loading = true);
+                            _loadRequests();
+                          },
+                          icon: const Icon(Icons.refresh),
+                          label: const Text('Retry'),
+                        ),
+                      ],
+                    ),
+                  )
               : _requestsWithRides.isEmpty
                   ? Center(
                       child: Column(
@@ -151,7 +174,7 @@ class _MyRequestsScreenState extends State<MyRequestsScreen> {
                         _loadRequests();
                       },
                       child: ListView.builder(
-                        padding: const EdgeInsets.all(8),
+                        padding: const EdgeInsets.all(16),
                         itemCount: _requestsWithRides.length,
                         itemBuilder: (context, idx) {
                           final item = _requestsWithRides[idx];
@@ -159,100 +182,142 @@ class _MyRequestsScreenState extends State<MyRequestsScreen> {
                           final ride = item['ride'] as Ride?;
 
                           return Card(
-                            margin: const EdgeInsets.symmetric(vertical: 4),
-                            child: Padding(
-                              padding: const EdgeInsets.all(12),
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Row(
-                                    children: [
-                                      CircleAvatar(
-                                        backgroundColor: _getStatusColor(request.status),
-                                        child: Icon(
-                                          _getStatusIcon(request.status),
-                                          color: Colors.white,
-                                        ),
-                                      ),
-                                      const SizedBox(width: 12),
-                                      Expanded(
-                                        child: Column(
-                                          crossAxisAlignment: CrossAxisAlignment.start,
-                                          children: [
-                                            if (ride != null)
-                                              Text(
-                                                '${ride.origin.address ?? 'Origin'} → ${ride.destination.address ?? 'Destination'}',
-                                                style: const TextStyle(fontWeight: FontWeight.bold),
-                                                maxLines: 1,
-                                                overflow: TextOverflow.ellipsis,
-                                              ),
-                                            if (ride != null)
-                                              Text(
-                                                DateFormat('MMM d, yyyy - HH:mm').format(ride.dateTime.toLocal()),
-                                                style: const TextStyle(fontSize: 12, color: Colors.grey),
-                                              ),
-                                            Text(
-                                              'Seats requested: ${request.seatsRequested}',
-                                              style: const TextStyle(fontSize: 12, color: Colors.grey),
-                                            ),
-                                          ],
-                                        ),
-                                      ),
-                                      Container(
-                                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                                        decoration: BoxDecoration(
-                                          color: _getStatusColor(request.status).withValues(alpha: 0.2),
-                                          borderRadius: BorderRadius.circular(4),
-                                        ),
-                                        child: Text(
-                                          request.status.toUpperCase(),
-                                          style: TextStyle(
-                                            fontSize: 12,
-                                            fontWeight: FontWeight.bold,
+                            margin: const EdgeInsets.only(bottom: 16),
+                            elevation: 2,
+                            shadowColor: _getStatusColor(request.status).withOpacity(0.2),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(16),
+                              side: BorderSide(
+                                color: _getStatusColor(request.status).withOpacity(0.2),
+                                width: 1,
+                              ),
+                            ),
+                            child: InkWell(
+                              borderRadius: BorderRadius.circular(16),
+                              onTap: ride != null
+                                  ? () => Navigator.push(
+                                        context,
+                                        MaterialPageRoute(builder: (_) => RideDetailScreen(ride: ride)),
+                                      )
+                                  : null,
+                              child: Padding(
+                                padding: const EdgeInsets.all(16),
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Row(
+                                      children: [
+                                        Container(
+                                          padding: const EdgeInsets.all(12),
+                                          decoration: BoxDecoration(
+                                            color: _getStatusColor(request.status).withOpacity(0.15),
+                                            borderRadius: BorderRadius.circular(12),
+                                          ),
+                                          child: Icon(
+                                            _getStatusIcon(request.status),
                                             color: _getStatusColor(request.status),
+                                            size: 24,
                                           ),
                                         ),
-                                      ),
-                                    ],
-                                  ),
-                                  const SizedBox(height: 12),
-                                  Row(
-                                    mainAxisAlignment: MainAxisAlignment.end,
-                                    children: [
-                                      if (ride != null) ...[
-                                        TextButton.icon(
-                                          onPressed: () => Navigator.push(
-                                            context,
-                                            MaterialPageRoute(builder: (_) => RideDetailScreen(ride: ride)),
+                                        const SizedBox(width: 12),
+                                        Expanded(
+                                          child: Column(
+                                            crossAxisAlignment: CrossAxisAlignment.start,
+                                            children: [
+                                              if (ride != null)
+                                                Text(
+                                                  '${ride.origin.address ?? 'Origin'} → ${ride.destination.address ?? 'Destination'}',
+                                                  style: const TextStyle(
+                                                    fontWeight: FontWeight.w600,
+                                                    fontSize: 15,
+                                                  ),
+                                                  maxLines: 2,
+                                                  overflow: TextOverflow.ellipsis,
+                                                ),
+                                              if (ride != null) const SizedBox(height: 4),
+                                              if (ride != null)
+                                                Row(
+                                                  children: [
+                                                    Icon(Icons.access_time, size: 14, color: Colors.grey.shade600),
+                                                    const SizedBox(width: 4),
+                                                    Text(
+                                                      DateFormat('MMM d, yyyy - HH:mm').format(ride.dateTime.toLocal()),
+                                                      style: TextStyle(fontSize: 12, color: Colors.grey.shade600),
+                                                    ),
+                                                  ],
+                                                ),
+                                              const SizedBox(height: 4),
+                                              Row(
+                                                children: [
+                                                  Icon(Icons.event_seat, size: 14, color: Colors.grey.shade600),
+                                                  const SizedBox(width: 4),
+                                                  Text(
+                                                    '${request.seatsRequested} seat${request.seatsRequested > 1 ? 's' : ''}',
+                                                    style: TextStyle(fontSize: 12, color: Colors.grey.shade600),
+                                                  ),
+                                                ],
+                                              ),
+                                            ],
                                           ),
-                                          icon: const Icon(Icons.info_outline),
-                                          label: const Text('Details'),
                                         ),
-                                        if (request.status == 'accepted')
-                                          TextButton.icon(
+                                        Container(
+                                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                                          decoration: BoxDecoration(
+                                            color: _getStatusColor(request.status).withOpacity(0.15),
+                                            borderRadius: BorderRadius.circular(20),
+                                          ),
+                                          child: Text(
+                                            request.status.toUpperCase(),
+                                            style: TextStyle(
+                                              fontSize: 11,
+                                              fontWeight: FontWeight.bold,
+                                              color: _getStatusColor(request.status),
+                                            ),
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                    const SizedBox(height: 16),
+                                    const Divider(height: 1),
+                                    const SizedBox(height: 8),
+                                    Wrap(
+                                      spacing: 8,
+                                      runSpacing: 8,
+                                      alignment: WrapAlignment.end,
+                                      children: [
+                                        if (ride != null && request.status == 'accepted')
+                                          OutlinedButton.icon(
                                             onPressed: () => Navigator.push(
                                               context,
                                               MaterialPageRoute(builder: (_) => ChatScreen(rideId: ride.id)),
                                             ),
-                                            icon: const Icon(Icons.chat),
+                                            icon: const Icon(Icons.chat, size: 18),
                                             label: const Text('Chat'),
+                                            style: OutlinedButton.styleFrom(
+                                              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                                            ),
+                                          ),
+                                        if (request.status == 'pending' || request.status == 'accepted')
+                                          OutlinedButton.icon(
+                                            onPressed: () => _cancelRequest(request),
+                                            icon: const Icon(Icons.cancel, size: 18, color: Colors.red),
+                                            label: const Text('Cancel', style: TextStyle(color: Colors.red)),
+                                            style: OutlinedButton.styleFrom(
+                                              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                                              side: const BorderSide(color: Colors.red),
+                                            ),
                                           ),
                                       ],
-                                      if (request.status == 'pending' || request.status == 'accepted')
-                                        TextButton.icon(
-                                          onPressed: () => _cancelRequest(request),
-                                          icon: const Icon(Icons.cancel, color: Colors.red),
-                                          label: const Text('Cancel', style: TextStyle(color: Colors.red)),
-                                        ),
-                                    ],
-                                  ),
-                                ],
+                                    ),
+                                  ],
+                                ),
                               ),
                             ),
                           );
                         },
                       ),
                     ),
+      ),
     );
   }
 }

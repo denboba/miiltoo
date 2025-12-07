@@ -60,10 +60,11 @@ class _SearchRidesScreenState extends State<SearchRidesScreen> {
       appBar: AppBar(
         title: const Text('Find a Ride'),
       ),
-      body: Column(
-        children: [
-          // Search and Filter Section
-          Container(
+      body: SafeArea(
+        child: Column(
+          children: [
+            // Search and Filter Section
+            Container(
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
               color: Theme.of(context).colorScheme.surface,
@@ -197,6 +198,7 @@ class _SearchRidesScreenState extends State<SearchRidesScreen> {
           ),
         ],
       ),
+        ),
     );
   }
 }

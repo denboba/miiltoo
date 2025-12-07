@@ -88,26 +88,30 @@ lib/
 
 The app includes comprehensive Google Maps integration:
 
-- **Location Picker**: Interactive map for selecting ride origin and destination
+- **Location Picker**: Interactive map for selecting ride origin and destination with user-friendly place names
 - **Current Location**: Automatic detection with permission handling
-- **Route Visualization**: Visual display of ride routes with markers
+- **Route Visualization**: Actual road routing using Google Directions API (with fallback to straight lines)
 - **Custom Markers**: Green for origin, red for destination
-- **Polylines**: Route paths between locations
+- **Polylines**: Route paths showing actual roads for car travel
+- **Safe Area Support**: All screens properly handle device notches and safe areas
 
-For setup instructions, see [Google Maps Setup Guide](docs/GOOGLE_MAPS_SETUP.md).
-    │   ├── profile_screen.dart         # User profile
-    │   ├── create_ride_screen.dart     # Create new ride
-    │   ├── search_rides_screen.dart    # Search available rides
-    │   ├── ride_detail_screen.dart     # View ride details
-    │   ├── my_rides_screen.dart        # Driver's rides list
-    │   ├── my_requests_screen.dart     # Passenger's requests
-    │   ├── manage_requests_screen.dart # Manage ride requests
-    │   └── chat_screen.dart            # In-ride chat
-    └── services/
-        ├── auth_service.dart           # Authentication service
-        ├── firestore_repo.dart         # Firestore operations
-        └── notification_service.dart   # Push notifications
-```
+### Google Maps API Key Setup
+
+To enable full routing functionality:
+
+1. Get a Google Maps API key from [Google Cloud Console](https://console.cloud.google.com)
+2. Enable the following APIs:
+   - Maps SDK for Android
+   - Maps SDK for iOS
+   - Directions API (for route visualization)
+3. Add the API key to:
+   - Android: `android/app/src/main/AndroidManifest.xml`
+   - iOS: `ios/Runner/AppDelegate.swift`
+   - For routing: Update the `googleApiKey` parameter in `lib/src/widgets/ride_map_widget.dart`
+
+**Note**: Without the Directions API key, the app will display a dotted line between origin and destination instead of actual road routes.
+
+For detailed setup instructions, see [Google Maps Setup Guide](docs/GOOGLE_MAPS_SETUP.md).
 
 ## Data Model
 
@@ -220,16 +224,25 @@ The app includes security rules that:
 - Allow drivers to accept/reject requests on their rides
 - Enable per-ride chat with proper authorization
 
+## Recent Improvements
+
+- ✅ **Safe Area Support**: All screens now properly handle device notches and safe areas for iOS/Android
+- ✅ **Modern UI/UX**: Enhanced card designs with better shadows, borders, and visual hierarchy
+- ✅ **Route Visualization**: Integrated Google Directions API for actual road routing (with graceful fallback)
+- ✅ **User-Friendly Locations**: Display place names instead of raw coordinates
+- ✅ **Improved MyRequests**: Better error handling, modern design, and enhanced user feedback
+- ✅ **Enhanced Typography**: Better font sizes, weights, and color usage throughout the app
+
 ## Future Enhancements
 
-- [ ] Google Maps place picker integration
-- [ ] Directions API for route visualization
+- [ ] Reverse geocoding for automatic address resolution
+- [ ] Google Maps place search/autocomplete integration
 - [ ] Profile picture upload
 - [ ] User ratings and reviews
 - [ ] Payment integration for cost-sharing
 - [ ] Advanced search with radius filter
 - [ ] Recurring rides
-- [ ] Cloud Functions for notifications
+- [ ] Cloud Functions for automated notifications
 
 ## License
 

@@ -90,7 +90,8 @@ class _CreateRideScreenState extends State<CreateRideScreen> {
             setState(() {
               _originLat = location.lat;
               _originLng = location.lng;
-              _originAddressController.text = location.address ?? '${location.lat.toStringAsFixed(4)}, ${location.lng.toStringAsFixed(4)}';
+              // Display user-friendly address instead of coordinates
+              _originAddressController.text = location.address ?? 'Origin Location';
             });
           },
           title: 'Select Origin',
@@ -111,7 +112,8 @@ class _CreateRideScreenState extends State<CreateRideScreen> {
             setState(() {
               _destLat = location.lat;
               _destLng = location.lng;
-              _destAddressController.text = location.address ?? '${location.lat.toStringAsFixed(4)}, ${location.lng.toStringAsFixed(4)}';
+              // Display user-friendly address instead of coordinates
+              _destAddressController.text = location.address ?? 'Destination Location';
             });
           },
           title: 'Select Destination',
@@ -200,9 +202,10 @@ class _CreateRideScreenState extends State<CreateRideScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(title: const Text('Create Ride')),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16.0),
-        child: Form(
+      body: SafeArea(
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.all(16.0),
+          child: Form(
           key: _formKey,
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -237,14 +240,6 @@ class _CreateRideScreenState extends State<CreateRideScreen> {
                         validator: (v) => v == null || v.trim().isEmpty ? 'Please enter origin address' : null,
                         readOnly: false,
                       ),
-                      if (_originLat != 0.0 && _originLng != 0.0)
-                        Padding(
-                          padding: const EdgeInsets.only(top: 8),
-                          child: Text(
-                            'Coordinates: ${_originLat.toStringAsFixed(4)}, ${_originLng.toStringAsFixed(4)}',
-                            style: Theme.of(context).textTheme.bodySmall,
-                          ),
-                        ),
                     ],
                   ),
                 ),
@@ -281,14 +276,6 @@ class _CreateRideScreenState extends State<CreateRideScreen> {
                         validator: (v) => v == null || v.trim().isEmpty ? 'Please enter destination address' : null,
                         readOnly: false,
                       ),
-                      if (_destLat != 0.0 && _destLng != 0.0)
-                        Padding(
-                          padding: const EdgeInsets.only(top: 8),
-                          child: Text(
-                            'Coordinates: ${_destLat.toStringAsFixed(4)}, ${_destLng.toStringAsFixed(4)}',
-                            style: Theme.of(context).textTheme.bodySmall,
-                          ),
-                        ),
                     ],
                   ),
                 ),
@@ -437,6 +424,7 @@ class _CreateRideScreenState extends State<CreateRideScreen> {
           ),
         ),
       ),
+        ),
     );
   }
 }

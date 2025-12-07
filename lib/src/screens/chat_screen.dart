@@ -79,9 +79,10 @@ class _ChatScreenState extends State<ChatScreen> {
       appBar: AppBar(
         title: const Text('Chat'),
       ),
-      body: Column(
-        children: [
-          Expanded(
+      body: SafeArea(
+        child: Column(
+          children: [
+            Expanded(
             child: StreamBuilder<QuerySnapshot>(
               stream: messagesStream,
               builder: (context, snapshot) {
@@ -231,6 +232,7 @@ class _ChatScreenState extends State<ChatScreen> {
           ),
         ],
       ),
+        ),
     );
   }
 }

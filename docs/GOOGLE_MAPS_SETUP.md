@@ -17,20 +17,25 @@ This guide will help you configure Google Maps API for the Miilto ride-sharing a
 
 Enable the following APIs in your Google Cloud project:
 
-1. **Maps SDK for Android**
+1. **Maps SDK for Android** (Required)
    - Navigate to APIs & Services → Library
    - Search for "Maps SDK for Android"
    - Click Enable
 
-2. **Maps SDK for iOS**
+2. **Maps SDK for iOS** (Required)
    - Search for "Maps SDK for iOS"
    - Click Enable
 
-3. **Geocoding API** (Optional, for address search)
+3. **Directions API** (Required for road-based routing)
+   - Search for "Directions API"
+   - Click Enable
+   - This enables the app to show actual road routes instead of straight lines
+
+4. **Geocoding API** (Optional, for address search)
    - Search for "Geocoding API"
    - Click Enable
 
-4. **Places API** (Optional, for place autocomplete)
+5. **Places API** (Optional, for place autocomplete)
    - Search for "Places API"
    - Click Enable
 
@@ -44,7 +49,7 @@ Enable the following APIs in your Google Cloud project:
    - Application restrictions: Android apps
    - Add your package name: `com.example.miiltoo`
    - Add your SHA-1 certificate fingerprint
-4. API restrictions: Select "Maps SDK for Android"
+4. API restrictions: Select "Maps SDK for Android" and "Directions API"
 5. Copy the API key
 
 ### For iOS
@@ -53,7 +58,7 @@ Enable the following APIs in your Google Cloud project:
 2. Restrict the key:
    - Application restrictions: iOS apps
    - Add your bundle identifier
-3. API restrictions: Select "Maps SDK for iOS"
+3. API restrictions: Select "Maps SDK for iOS" and "Directions API"
 4. Copy the API key
 
 ## Step 4: Configure the App
@@ -83,6 +88,22 @@ import GoogleMaps
 ```swift
 GMSServices.provideAPIKey("YOUR_IOS_API_KEY_HERE")
 ```
+
+### Directions API Configuration (For Road-Based Routing)
+
+The app uses the Directions API to display actual road routes between locations. To enable this:
+
+1. Open `lib/src/widgets/ride_map_widget.dart`
+2. Locate the `_setupPolyline()` method (around line 67)
+3. Replace the empty API key with your actual key:
+
+```dart
+const String apiKey = 'YOUR_DIRECTIONS_API_KEY_HERE';
+```
+
+**Security Note**: For production apps, store API keys in environment variables or secure configuration files, not in source code.
+
+**Without Directions API**: If no API key is configured, the app will display a dotted straight line between origin and destination instead of actual road routes.
 
 ## Step 5: Get SHA-1 Fingerprint (Android)
 
@@ -151,11 +172,12 @@ To enable place search autocomplete:
 
 ### Directions API
 
-To show actual routes instead of straight lines:
+To show actual road routes (already implemented):
 
-1. Enable Directions API in Google Cloud Console
-2. Update `RideMapWidget` to fetch route polylines
-3. Use `flutter_polyline_points` package to decode routes
+1. Enable Directions API in Google Cloud Console (see Step 2)
+2. Configure API key in `lib/src/widgets/ride_map_widget.dart` (see Step 4)
+3. The app will automatically show car-based routes with solid polylines
+4. Falls back to dotted straight lines if API key is not configured
 
 ## Cost Considerations
 
@@ -163,6 +185,7 @@ Google Maps Platform has a pay-as-you-go pricing model:
 
 - First $200 of monthly usage is free
 - Maps SDK: $7 per 1,000 map loads
+- Directions API: $5 per 1,000 requests
 - Geocoding API: $5 per 1,000 requests
 - Places API: $17 per 1,000 requests
 
