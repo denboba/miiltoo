@@ -61,8 +61,6 @@ class _RideMapWidgetState extends State<RideMapWidget> {
     setState(() => _loadingRoute = true);
     
     try {
-      PolylinePoints polylinePoints = PolylinePoints();
-      
       // Attempt to get route from Google Directions API
       // Note: This requires a Google Maps API key with Directions API enabled
       // TODO: Move API key to environment variables or secure configuration
@@ -73,8 +71,9 @@ class _RideMapWidgetState extends State<RideMapWidget> {
         throw Exception('Google Maps API key not configured');
       }
       
+      PolylinePoints polylinePoints = PolylinePoints(apiKey: apiKey);
+      
       PolylineResult result = await polylinePoints.getRouteBetweenCoordinates(
-        googleApiKey: apiKey,
         request: PolylineRequest(
           origin: PointLatLng(widget.ride.origin.lat, widget.ride.origin.lng),
           destination: PointLatLng(widget.ride.destination.lat, widget.ride.destination.lng),
