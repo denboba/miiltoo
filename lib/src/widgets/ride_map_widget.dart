@@ -65,8 +65,16 @@ class _RideMapWidgetState extends State<RideMapWidget> {
       
       // Attempt to get route from Google Directions API
       // Note: This requires a Google Maps API key with Directions API enabled
+      // TODO: Move API key to environment variables or secure configuration
+      const String apiKey = ''; // API key should be stored securely, not hardcoded
+      
+      if (apiKey.isEmpty) {
+        // Skip API call if no key is configured
+        throw Exception('Google Maps API key not configured');
+      }
+      
       PolylineResult result = await polylinePoints.getRouteBetweenCoordinates(
-        googleApiKey: '', // API key should be stored securely, not hardcoded
+        googleApiKey: apiKey,
         request: PolylineRequest(
           origin: PointLatLng(widget.ride.origin.lat, widget.ride.origin.lng),
           destination: PointLatLng(widget.ride.destination.lat, widget.ride.destination.lng),
@@ -103,6 +111,9 @@ class _RideMapWidgetState extends State<RideMapWidget> {
         _loadingRoute = false;
       });
     } catch (e) {
+      // Log error for debugging
+      debugPrint('Failed to load route from Directions API: $e');
+      
       // Fallback to simple straight line on error
       final polyline = Polyline(
         polylineId: const PolylineId('route'),
