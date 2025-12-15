@@ -448,6 +448,7 @@ class _RideCard extends StatelessWidget {
           ),
         ),
       ),
+    ),
     );
   }
 }
