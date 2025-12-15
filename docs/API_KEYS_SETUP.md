@@ -152,6 +152,29 @@ The app is designed to handle missing API keys gracefully:
 - Android/iOS maps won't load
 - Web platform is unaffected
 
+## Validate Your Setup
+
+We provide a handy validation script to check your API key configuration:
+
+```bash
+./scripts/validate_api_keys.sh
+```
+
+This script will:
+- Check if `.env` file exists
+- Verify all required API keys are present
+- Detect placeholder values that need to be replaced
+- Check platform-specific configuration files
+- Provide a summary and next steps
+
+**Example output:**
+```
+✓ .env file found
+✓ GOOGLE_MAPS_WEB_API_KEY is configured
+✓ GOOGLE_DIRECTIONS_API_KEY is configured
+⚠ GOOGLE_MAPS_ANDROID_API_KEY is set but uses placeholder value
+```
+
 ## Security Best Practices
 
 ### 1. API Key Restrictions
