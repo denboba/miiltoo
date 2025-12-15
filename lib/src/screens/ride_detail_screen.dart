@@ -267,21 +267,54 @@ class _RideDetailScreenState extends State<RideDetailScreen> {
                       ],
                       const SizedBox(height: 24),
 
-                      // Action Buttons
+                      // Action Buttons with modern design
                       if (!_isDriver && ride.status == 'open' && ride.seatsAvailable > 0)
-                        ElevatedButton.icon(
-                          onPressed: _loading ? null : _requestSeat,
-                          icon: _loading
-                              ? const SizedBox(
-                                  width: 20,
-                                  height: 20,
-                                  child: CircularProgressIndicator(strokeWidth: 2),
-                                )
-                              : const Icon(Icons.add),
-                          label: Text(_loading ? 'Requesting...' : 'Request a Seat'),
-                          style: ElevatedButton.styleFrom(
-                            padding: const EdgeInsets.symmetric(vertical: 16),
-                            minimumSize: const Size(double.infinity, 48),
+                        Container(
+                          width: double.infinity,
+                          height: 56,
+                          decoration: BoxDecoration(
+                            gradient: LinearGradient(
+                              colors: [
+                                Theme.of(context).colorScheme.primary,
+                                Theme.of(context).colorScheme.secondary,
+                              ],
+                            ),
+                            borderRadius: BorderRadius.circular(12),
+                            boxShadow: [
+                              BoxShadow(
+                                color: Theme.of(context).colorScheme.primary.withOpacity(0.3),
+                                blurRadius: 12,
+                                offset: const Offset(0, 6),
+                              ),
+                            ],
+                          ),
+                          child: ElevatedButton.icon(
+                            onPressed: _loading ? null : _requestSeat,
+                            icon: _loading
+                                ? const SizedBox(
+                                    width: 20,
+                                    height: 20,
+                                    child: CircularProgressIndicator(
+                                      strokeWidth: 2,
+                                      color: Colors.white,
+                                    ),
+                                  )
+                                : const Icon(Icons.person_add),
+                            label: Text(
+                              _loading ? 'Requesting...' : 'Request a Seat',
+                              style: const TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: Colors.transparent,
+                              shadowColor: Colors.transparent,
+                              padding: const EdgeInsets.symmetric(vertical: 16),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                            ),
                           ),
                         ),
 
@@ -292,11 +325,18 @@ class _RideDetailScreenState extends State<RideDetailScreen> {
                           context,
                           MaterialPageRoute(builder: (_) => ChatScreen(rideId: ride.id)),
                         ),
-                        icon: const Icon(Icons.chat),
+                        icon: const Icon(Icons.chat_bubble_outline),
                         label: const Text('Open Chat'),
                         style: OutlinedButton.styleFrom(
                           padding: const EdgeInsets.symmetric(vertical: 16),
-                          minimumSize: const Size(double.infinity, 48),
+                          minimumSize: const Size(double.infinity, 56),
+                          side: BorderSide(
+                            color: Theme.of(context).colorScheme.primary,
+                            width: 1.5,
+                          ),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
                         ),
                       ),
                     ],
