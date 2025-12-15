@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 import 'src/screens/login_screen.dart';
 import 'src/screens/home_screen.dart';
@@ -17,6 +18,16 @@ import 'firebase_options.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+
+  // Load environment variables
+  AppLogger.info('Loading environment variables...');
+  try {
+    await dotenv.load(fileName: ".env");
+    AppLogger.info('Environment variables loaded successfully');
+  } catch (e) {
+    AppLogger.warning('Failed to load .env file: $e. Using default configuration.');
+    // Continue without .env file - this is optional for development
+  }
 
   AppLogger.info('Initializing Firebase...');
   try {

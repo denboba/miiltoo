@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:flutter_polyline_points/flutter_polyline_points.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import '../models/ride_model.dart';
 import '../config/app_theme.dart';
 
@@ -63,10 +64,10 @@ class _RideMapWidgetState extends State<RideMapWidget> {
     try {
       // Attempt to get route from Google Directions API
       // Note: This requires a Google Maps API key with Directions API enabled
-      // TODO: Move API key to environment variables or secure configuration
-      const String apiKey = ''; // API key should be stored securely, not hardcoded
+      // API key is loaded from .env file
+      final String? apiKey = dotenv.env['GOOGLE_DIRECTIONS_API_KEY'];
       
-      if (apiKey.isEmpty) {
+      if (apiKey == null || apiKey.isEmpty) {
         // Skip API call if no key is configured
         throw Exception('Google Maps API key not configured');
       }
