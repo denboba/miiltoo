@@ -97,21 +97,36 @@ The app includes comprehensive Google Maps integration:
 
 ### Google Maps API Key Setup
 
-To enable full routing functionality:
+The app uses environment variables to manage Google Maps API keys securely:
 
-1. Get a Google Maps API key from [Google Cloud Console](https://console.cloud.google.com)
-2. Enable the following APIs:
-   - Maps SDK for Android
-   - Maps SDK for iOS
-   - Directions API (for route visualization)
-3. Add the API key to:
-   - Android: `android/app/src/main/AndroidManifest.xml`
-   - iOS: `ios/Runner/AppDelegate.swift`
-   - For routing: Update the `googleApiKey` parameter in `lib/src/widgets/ride_map_widget.dart`
+#### Quick Setup
 
-**Note**: Without the Directions API key, the app will display a dotted line between origin and destination instead of actual road routes.
+1. **Get API keys** from [Google Cloud Console](https://console.cloud.google.com)
+   - Enable: Maps SDK for Android, Maps SDK for iOS, Maps JavaScript API, Directions API
 
-For detailed setup instructions, see [Google Maps Setup Guide](docs/GOOGLE_MAPS_SETUP.md).
+2. **Configure environment variables**:
+   ```bash
+   cp .env.example .env
+   ```
+   Edit `.env` and add your API keys.
+
+3. **For Web**: Create `web/google_maps_config.js` from the example file:
+   ```bash
+   cp web/google_maps_config.js.example web/google_maps_config.js
+   ```
+
+4. **Platform-specific**:
+   - Android: Update API key in `android/app/src/main/AndroidManifest.xml`
+   - iOS: Update API key in `ios/Runner/AppDelegate.swift`
+
+**Graceful Degradation**: 
+- Without web API key: Maps won't load on web (mobile unaffected)
+- Without Directions API key: Routes display as dotted lines instead of following roads
+- Without mobile keys: Maps won't load on Android/iOS (web unaffected)
+
+For detailed setup instructions, see:
+- [API Keys Setup Guide](docs/API_KEYS_SETUP.md) - Environment variables and configuration
+- [Google Maps Setup Guide](docs/GOOGLE_MAPS_SETUP.md) - Platform-specific details
 
 ## Data Model
 

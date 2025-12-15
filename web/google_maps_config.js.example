@@ -1,0 +1,7 @@
+// Google Maps Configuration for Web
+// Copy this file to google_maps_config.js (remove .example) and add your API key
+// This file should be loaded before index.html
+
+var GOOGLE_MAPS_CONFIG = {
+  apiKey: 'YOUR_WEB_API_KEY_HERE'
+};

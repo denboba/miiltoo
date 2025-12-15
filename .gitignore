@@ -12,6 +12,10 @@
 .swiftpm/
 migrate_working_dir/
 
+# Environment variables
+.env
+web/google_maps_config.js
+
 # IntelliJ related
 *.iml
 *.ipr

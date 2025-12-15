@@ -33,7 +33,31 @@
   <link rel="manifest" href="manifest.json">
 
   <!-- Google Maps JavaScript API -->
-  <script src="https://maps.googleapis.com/maps/api/js?key=YOUR_API_KEY"></script>
+  <!-- 
+    Note: Replace YOUR_WEB_API_KEY with your actual Google Maps JavaScript API key
+    or set the GOOGLE_MAPS_WEB_API_KEY environment variable during build.
+    Without a valid API key, you'll see "InvalidKeyMapError" in the console.
+    Get your API key from: https://console.cloud.google.com/
+    Enable: Maps JavaScript API
+  -->
+  <script>
+    // Try to load API key from environment or use placeholder
+    var googleMapsApiKey = 'YOUR_WEB_API_KEY';
+    // Check if we're in development and have a config file
+    if (typeof GOOGLE_MAPS_CONFIG !== 'undefined' && GOOGLE_MAPS_CONFIG.apiKey) {
+      googleMapsApiKey = GOOGLE_MAPS_CONFIG.apiKey;
+    }
+    // Load Google Maps with the API key using modern approach
+    if (googleMapsApiKey && googleMapsApiKey !== 'YOUR_WEB_API_KEY') {
+      var script = document.createElement('script');
+      script.src = 'https://maps.googleapis.com/maps/api/js?key=' + googleMapsApiKey;
+      script.async = true;
+      script.defer = true;
+      document.head.appendChild(script);
+    } else {
+      console.warn('Google Maps API key not configured. Map features will not work. See web/index.html for instructions.');
+    }
+  </script>
 </head>
 <body>
   <script src="flutter_bootstrap.js" async></script>

@@ -63,6 +63,25 @@ Enable the following APIs in your Google Cloud project:
 
 ## Step 4: Configure the App
 
+> **New**: This app now uses environment variables for secure API key management. See [API_KEYS_SETUP.md](./API_KEYS_SETUP.md) for the recommended approach.
+
+### Quick Setup (Using Environment Variables - Recommended)
+
+1. **Create environment file**:
+   ```bash
+   cp .env.example .env
+   ```
+
+2. **Add your API keys** to `.env`:
+   ```
+   GOOGLE_MAPS_WEB_API_KEY=your_web_api_key
+   GOOGLE_DIRECTIONS_API_KEY=your_directions_api_key
+   GOOGLE_MAPS_ANDROID_API_KEY=your_android_api_key
+   GOOGLE_MAPS_IOS_API_KEY=your_ios_api_key
+   ```
+
+3. **Configure platform-specific files** (see below)
+
 ### Android Configuration
 
 1. Open `android/app/src/main/AndroidManifest.xml`
@@ -77,33 +96,70 @@ Enable the following APIs in your Google Cloud project:
 ### iOS Configuration
 
 1. Open `ios/Runner/AppDelegate.swift`
-2. Add the following import at the top:
+2. Uncomment the GoogleMaps import:
 
 ```swift
 import GoogleMaps
 ```
 
-3. Add this line in the `application` method before `GeneratedPluginRegistrant.register`:
+3. Uncomment and update the API key line in the `application` method:
 
 ```swift
 GMSServices.provideAPIKey("YOUR_IOS_API_KEY_HERE")
 ```
 
+### Web Configuration
+
+1. **Option 1 (Recommended)**: Create `web/google_maps_config.js`:
+   ```bash
+   cp web/google_maps_config.js.example web/google_maps_config.js
+   ```
+   
+   Edit the file and add your web API key:
+   ```javascript
+   var GOOGLE_MAPS_CONFIG = {
+     apiKey: 'your_web_api_key_here'
+   };
+   ```
+
+2. **Option 2**: Edit `web/index.html` directly and replace `YOUR_WEB_API_KEY` (not recommended for version control)
+
 ### Directions API Configuration (For Road-Based Routing)
 
-The app uses the Directions API to display actual road routes between locations. To enable this:
+The app now automatically reads the Directions API key from the `.env` file using the `GOOGLE_DIRECTIONS_API_KEY` variable. No code changes needed!
 
-1. Open `lib/src/widgets/ride_map_widget.dart`
-2. Locate the `_setupPolyline()` method (around line 67)
-3. Replace the empty API key with your actual key:
-
-```dart
-const String apiKey = 'YOUR_DIRECTIONS_API_KEY_HERE';
-```
-
-**Security Note**: For production apps, store API keys in environment variables or secure configuration files, not in source code.
+**How it works**:
+- The app loads `.env` on startup via `flutter_dotenv`
+- `ride_map_widget.dart` reads `GOOGLE_DIRECTIONS_API_KEY` from environment
+- If the key is missing, the app gracefully falls back to showing dotted straight lines
 
 **Without Directions API**: If no API key is configured, the app will display a dotted straight line between origin and destination instead of actual road routes.
+
+## Understanding Common Errors (Now Fixed)
+
+### "Failed to load route from Directions API: Exception: Google Maps API key not configured"
+
+**What it means**: The Directions API key was hardcoded as empty string in the code.
+
+**How it's fixed**: The app now reads the key from `.env` file using `flutter_dotenv`. When you add `GOOGLE_DIRECTIONS_API_KEY` to your `.env` file, this error will be resolved.
+
+### "InvalidKeyMapError" (Web)
+
+**What it means**: The web app tried to load Google Maps JavaScript API with an invalid or placeholder key (`YOUR_API_KEY`).
+
+**How it's fixed**: The `web/index.html` now includes logic to:
+1. Check for a valid API key from config file
+2. Only load Maps API if a valid key exists
+3. Show a clear warning in console if key is missing
+4. Prevent the "InvalidKeyMapError" by not loading the API with invalid key
+
+### "google.maps.Marker is deprecated" Warning
+
+**What it means**: Google is deprecating the old `Marker` API in favor of `AdvancedMarkerElement`.
+
+**Current status**: This is just a deprecation warning, not an error. The old API still works and will continue to work for at least 12 months after discontinuation is announced. The Flutter `google_maps_flutter` package will need to be updated to support the new API - this is handled by the package maintainers, not in application code.
+
+**Action needed**: Monitor the `google_maps_flutter` package for updates that support `AdvancedMarkerElement`.
 
 ## Step 5: Get SHA-1 Fingerprint (Android)
 
