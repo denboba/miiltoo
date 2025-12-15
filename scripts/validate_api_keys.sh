@@ -35,7 +35,9 @@ if [ -f ".env" ]; then
     
     for key in "${keys[@]}"; do
         if grep -q "^${key}=" .env; then
-            value=$(grep "^${key}=" .env | cut -d'=' -f2)
+            # Use parameter expansion to handle = in values correctly
+            line=$(grep "^${key}=" .env)
+            value="${line#*=}"
             if [ -z "$value" ] || [ "$value" = "YOUR_API_KEY_HERE" ]; then
                 echo -e "${YELLOW}⚠${NC} ${key} is set but uses placeholder value"
                 ((placeholder_keys++))

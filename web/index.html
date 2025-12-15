@@ -47,9 +47,13 @@
     if (typeof GOOGLE_MAPS_CONFIG !== 'undefined' && GOOGLE_MAPS_CONFIG.apiKey) {
       googleMapsApiKey = GOOGLE_MAPS_CONFIG.apiKey;
     }
-    // Load Google Maps with the API key
+    // Load Google Maps with the API key using modern approach
     if (googleMapsApiKey && googleMapsApiKey !== 'YOUR_WEB_API_KEY') {
-      document.write('<script src="https://maps.googleapis.com/maps/api/js?key=' + googleMapsApiKey + '"><\/script>');
+      var script = document.createElement('script');
+      script.src = 'https://maps.googleapis.com/maps/api/js?key=' + googleMapsApiKey;
+      script.async = true;
+      script.defer = true;
+      document.head.appendChild(script);
     } else {
       console.warn('Google Maps API key not configured. Map features will not work. See web/index.html for instructions.');
     }
