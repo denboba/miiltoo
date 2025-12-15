@@ -3,6 +3,7 @@ import 'package:intl/intl.dart';
 import '../services/firestore_repo.dart';
 import '../models/ride_model.dart';
 import '../config/app_theme.dart';
+import '../widgets/loading_skeleton.dart';
 import 'package:miiltoo/src/screens/ride_detail_screen.dart';
 
 class SearchRidesScreen extends StatefulWidget {
@@ -136,7 +137,7 @@ class _SearchRidesScreenState extends State<SearchRidesScreen> {
                     padding: const EdgeInsets.all(16),
                     itemCount: 3,
                     itemBuilder: (context, idx) {
-                      return _RideCardSkeleton();
+                      return RideCardSkeleton(key: ValueKey(idx));
                     },
                   );
                 }
@@ -241,85 +242,6 @@ class _SearchRidesScreenState extends State<SearchRidesScreen> {
         ],
       ),
         ),
-    );
-  }
-}
-
-/// Skeleton loader for ride card
-class _RideCardSkeleton extends StatefulWidget {
-  @override
-  State<_RideCardSkeleton> createState() => _RideCardSkeletonState();
-}
-
-class _RideCardSkeletonState extends State<_RideCardSkeleton>
-    with SingleTickerProviderStateMixin {
-  late AnimationController _controller;
-  late Animation<double> _animation;
-
-  @override
-  void initState() {
-    super.initState();
-    _controller = AnimationController(
-      duration: const Duration(milliseconds: 1000),
-      vsync: this,
-    )..repeat(reverse: true);
-    _animation = Tween<double>(begin: 0.3, end: 0.7).animate(_controller);
-  }
-
-  @override
-  void dispose() {
-    _controller.dispose();
-    super.dispose();
-  }
-
-  Widget _buildSkeleton(double width, double height) {
-    return AnimatedBuilder(
-      animation: _animation,
-      builder: (context, child) {
-        return Container(
-          width: width,
-          height: height,
-          decoration: BoxDecoration(
-            color: Colors.grey[300]?.withOpacity(_animation.value),
-            borderRadius: BorderRadius.circular(8),
-          ),
-        );
-      },
-    );
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Card(
-      margin: const EdgeInsets.only(bottom: 12),
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                _buildSkeleton(36, 36),
-                const SizedBox(width: 8),
-                Expanded(child: _buildSkeleton(100, 16)),
-                _buildSkeleton(60, 20),
-              ],
-            ),
-            const SizedBox(height: 16),
-            _buildSkeleton(double.infinity, 14),
-            const SizedBox(height: 32),
-            _buildSkeleton(double.infinity, 14),
-            const SizedBox(height: 16),
-            Row(
-              children: [
-                _buildSkeleton(80, 12),
-                const Spacer(),
-                _buildSkeleton(70, 24),
-              ],
-            ),
-          ],
-        ),
-      ),
     );
   }
 }
